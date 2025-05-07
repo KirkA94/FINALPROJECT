@@ -30,7 +30,8 @@ export default function Home() {
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
-      <h1>MyPolls By Kirk Austin</h1>
+      <h1>MyPolls</h1>
+      <h5>By: Kirk Austin</h5>
       <p>Welcome to MyPolls, where you can create and participate in exciting polls!</p>
 
       <div style={{ margin: '20px 0' }}>

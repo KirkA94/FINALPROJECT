@@ -72,7 +72,7 @@ export default function Home() {
 
   return (
     <div style={{ padding: '20px' }}>
-      <h1>Online Polling App</h1>
+      <h1>Polls Dashboard</h1>
 
       {/* Form for creating a new poll */}
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
