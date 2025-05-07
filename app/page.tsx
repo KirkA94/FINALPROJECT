@@ -1,133 +1,88 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 type Poll = {
   id: number;
   question: string;
-  options: string[];
 };
 
 export default function Home() {
-  const [polls, setPolls] = useState<Poll[]>([]);
-  const [question, setQuestion] = useState('');
-  const [options, setOptions] = useState(['', '']);
+  const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
+  const router = useRouter();
 
-  // Fetch polls on initial render
+  // Fetch the most recent polls on mount
   useEffect(() => {
-    const fetchPolls = async () => {
+    const fetchRecentPolls = async () => {
       try {
         const response = await fetch('/api/polls');
         const data = await response.json();
-        setPolls(data);
+        // Limit to the 5 most recent polls
+        setRecentPolls(data.slice(0, 5));
       } catch (error) {
-        console.error('Failed to fetch polls:', error);
+        console.error('Failed to fetch recent polls:', error);
       }
     };
 
-    fetchPolls();
+    fetchRecentPolls();
   }, []);
 
-  // Add a new option input field for creating polls
-  const addOption = () => {
-    setOptions([...options, '']);
-  };
-
-  // Update the value of an existing option
-  const handleOptionChange = (index: number, value: string) => {
-    const updatedOptions = [...options];
-    updatedOptions[index] = value;
-    setOptions(updatedOptions);
-  };
-
-  // Handle form submission to create a new poll
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!question.trim() || options.some((option) => !option.trim())) {
-      alert('Please fill in the question and all options.');
-      return;
-    }
-
-    try {
-      const res = await fetch('/api/polls', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ question, options }),
-      });
-
-      if (res.ok) {
-        setQuestion('');
-        setOptions(['', '']);
-        // Re-fetch polls after creating a new one
-        const updatedPolls = await fetch('/api/polls').then((res) => res.json());
-        setPolls(updatedPolls);
-      }
-    } catch (error) {
-      console.error('Failed to create poll:', error);
-    }
-  };
-
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Online Polling App</h1>
+    <div style={{ padding: '20px', textAlign: 'center' }}>
+      <h1>MyPolls By Kirk Austin</h1>
+      <p>Welcome to MyPolls, where you can create and participate in exciting polls!</p>
 
-      {/* Form for creating a new poll */}
-      <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
-        <div>
-          <label htmlFor="question">Poll Question:</label>
-          <input
-            id="question"
-            type="text"
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-          />
-        </div>
-
-        <div>
-          <label>Poll Options:</label>
-          {options.map((option, index) => (
-            <input
-              key={index}
-              type="text"
-              value={option}
-              onChange={(e) => handleOptionChange(index, e.target.value)}
-              placeholder={`Option ${index + 1}`}
-              style={{ width: '100%', marginBottom: '10px', padding: '8px' }}
-            />
-          ))}
-          <button
-            type="button"
-            onClick={addOption}
-            style={{ marginTop: '10px' }}
-          >
-            Add Option
-          </button>
-        </div>
-
-        <button type="submit" style={{ marginTop: '20px' }}>
-          Create Poll
+      <div style={{ margin: '20px 0' }}>
+        <button
+          onClick={() => router.push('/polls')}
+          style={{
+            margin: '10px',
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+          }}
+        >
+          Enter Polls
         </button>
-      </form>
 
-      {/* List of polls */}
-      {polls.length > 0 ? (
-        polls.map((poll) => (
-          <div key={poll.id} style={{ marginBottom: '20px' }}>
-            <h2>{poll.question}</h2>
-            {poll.options.map((option, index) => (
-              <div key={index}>
-                <span>{option}</span>
-              </div>
+        <button
+          onClick={() => router.push('/create-user')}
+          style={{
+            margin: '10px',
+            padding: '10px 20px',
+            fontSize: '16px',
+            cursor: 'pointer',
+          }}
+        >
+          Create User
+        </button>
+      </div>
+
+      <div style={{ marginTop: '30px' }}>
+        <h2>Most Recent Polls</h2>
+        {recentPolls.length > 0 ? (
+          <ul style={{ listStyle: 'none', padding: 0 }}>
+            {recentPolls.map((poll) => (
+              <li
+                key={poll.id}
+                style={{
+                  margin: '10px 0',
+                  padding: '10px',
+                  border: '1px solid #ccc',
+                  borderRadius: '5px',
+                  cursor: 'pointer',
+                }}
+                onClick={() => router.push(`/polls/${poll.id}`)}
+              >
+                {poll.question}
+              </li>
             ))}
-          </div>
-        ))
-      ) : (
-        <p>No polls available.</p>
-      )}
+          </ul>
+        ) : (
+          <p>No recent polls available.</p>
+        )}
+      </div>
     </div>
   );
 }
