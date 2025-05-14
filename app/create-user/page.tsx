@@ -75,6 +75,13 @@ export default function CreateUser() {
             style={{ width: '100%', padding: '8px' }}
           />
         </div>
+        <div style={{ marginBottom: '10px', textAlign: 'center' }}>
+          <img
+            src={profileImage ? URL.createObjectURL(profileImage) : '/default-profile.png'}
+            alt={`${username}'s profile`}
+            style={{ width: '100px', height: '100px', borderRadius: '50%' }}
+          />
+        </div>
         <button
           type="submit"
           style={{

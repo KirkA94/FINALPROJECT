@@ -1,46 +1,74 @@
-import { PrismaClient } from '@prisma/client';
 import { NextResponse } from 'next/server';
-import { promises as fs } from 'fs';
-import path from 'path';
+import { prisma } from '../../../lib/prisma'; // Singleton pattern for Prisma
 
-const prisma = new PrismaClient();
+// Handle GET requests: Fetch user and their polls
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const userId = Number(url.searchParams.get('id'));
 
-export async function POST(req: Request) {
-  const formData = await req.formData();
-  const username = formData.get('username') as string;
-  const password = formData.get('password') as string;
-  const profileImage = formData.get('profileImage') as File;
-
-  if (!username || !password || !profileImage) {
-    return NextResponse.json(
-      { message: 'All fields are required.' },
-      { status: 400 }
-    );
-  }
-
-  // Save the profile image to the "public/uploads" folder
-  const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
-  await fs.mkdir(uploadsDir, { recursive: true });
-  const imagePath = path.join(uploadsDir, profileImage.name);
-  const imageBuffer = Buffer.from(await profileImage.arrayBuffer());
-  await fs.writeFile(imagePath, imageBuffer);
-
-  // Save the user to the database
   try {
-    const newUser = await prisma.user.create({
-      data: {
-        username,
-        password, // Note: Store passwords securely in a real app!
-        profileImage: `/uploads/${profileImage.name}`,
-      },
+    if (isNaN(userId)) {
+      // Return all polls if no userId is provided
+      const polls = await prisma.poll.findMany();
+      return NextResponse.json(polls, { status: 200 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { polls: true },
     });
 
-    return NextResponse.json(newUser, { status: 201 });
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      username: user.username,
+      profileImage: user.profileImage,
+      polls: user.polls,
+    }, { status: 200 });
   } catch (error) {
-    console.error('Error creating user:', error);
-    return NextResponse.json(
-      { message: 'Failed to create user.' },
-      { status: 500 }
-    );
+    console.error('Error fetching user:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// Handle POST requests: Create a new poll
+export async function POST(req: Request) {
+  try {
+    const { question, options } = await req.json();
+    if (!question || !Array.isArray(options) || options.length < 2) {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
+
+    const newPoll = await prisma.poll.create({
+      data: {
+        question,
+        options, // Ensure `options` is a JSON field in the schema
+      },
+    });
+    return NextResponse.json(newPoll, { status: 201 });
+  } catch (error) {
+    console.error('Error creating poll:', error);
+    return NextResponse.json({ error: 'Failed to create poll' }, { status: 500 });
+  }
+}
+
+// Handle PUT requests: Update poll votes
+export async function PUT(req: Request) {
+  try {
+    const { id, votes } = await req.json();
+    if (!id || typeof id !== 'number' || !votes || typeof votes !== 'object') {
+      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
+    }
+
+    const updatedPoll = await prisma.poll.update({
+      where: { id },
+      data: { votes }, // Ensure `votes` exists in the schema
+    });
+    return NextResponse.json(updatedPoll, { status: 200 });
+  } catch (error) {
+    console.error('Error updating poll:', error);
+    return NextResponse.json({ error: 'Failed to update poll' }, { status: 500 });
   }
 }

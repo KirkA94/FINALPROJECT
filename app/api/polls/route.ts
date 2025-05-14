@@ -1,16 +1,33 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '../../../lib/prisma'; // Use the singleton
 
-const prisma = new PrismaClient();
+// Handle GET requests: Fetch user and their polls
+export async function GET(request: Request) {
+  const url = new URL(request.url);
+  const userId = Number(url.searchParams.get('id'));
 
-// Handle GET requests: Fetch all polls
-export async function GET() {
+  if (isNaN(userId)) {
+    return NextResponse.json({ error: 'Invalid user ID' }, { status: 400 });
+  }
+
   try {
-    const polls = await prisma.poll.findMany();
-    return NextResponse.json(polls, { status: 200 });
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: { polls: true },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({
+      username: user.username,
+      profileImage: user.profileImage,
+      polls: user.polls,
+    });
   } catch (error) {
-    console.error('Error fetching polls:', error);
-    return NextResponse.json({ error: 'Failed to fetch polls' }, { status: 500 });
+    console.error('Error fetching user:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
