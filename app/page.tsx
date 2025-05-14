@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import AuthButtons from './components/AuthButtons';
+
 
 type Poll = {
   id: number;
@@ -33,7 +35,7 @@ export default function Home() {
       <h1>MyPolls</h1>
       <h5>By: Kirk Austin</h5>
       <p>Welcome to MyPolls, where you can create and participate in exciting polls!</p>
-
+      
       <div style={{ margin: '20px 0' }}>
         <button
           onClick={() => router.push('/polls')}
