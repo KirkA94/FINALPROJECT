@@ -1,74 +1,90 @@
-import { NextResponse } from 'next/server';
-import { prisma } from '../../../lib/prisma'; // Singleton pattern for Prisma
+import { NextRequest, NextResponse } from 'next/server';
+import formidable from 'formidable';
+import { prisma } from '../../../lib/prisma';
+import path from 'path';
+import { Readable } from 'stream';
 
-// Handle GET requests: Fetch user and their polls
-export async function GET(request: Request) {
-  const url = new URL(request.url);
-  const userId = Number(url.searchParams.get('id'));
+export const config = {
+  api: {
+    bodyParser: false, // Disable Next.js's native body parsing
+  },
+};
 
-  try {
-    if (isNaN(userId)) {
-      // Return all polls if no userId is provided
-      const polls = await prisma.poll.findMany();
-      return NextResponse.json(polls, { status: 200 });
-    }
-
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      include: { polls: true },
-    });
-
-    if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
-    }
-
-    return NextResponse.json({
-      username: user.username,
-      profileImage: user.profileImage,
-      polls: user.polls,
-    }, { status: 200 });
-  } catch (error) {
-    console.error('Error fetching user:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
-  }
+// Extend the Readable type to include headers
+interface ReadableWithHeaders extends Readable {
+  headers: Record<string, string>;
 }
 
-// Handle POST requests: Create a new poll
-export async function POST(req: Request) {
+// Custom function to convert a ReadableStream to a Node.js Readable
+function readableFromStream(request: NextRequest): ReadableWithHeaders {
+  const reader = request.body?.getReader();
+
+  if (!reader) {
+    throw new Error('Request body is null or undefined');
+  }
+
+  const stream = new Readable({
+    async read() {
+      const { done, value } = await reader.read();
+      if (done) {
+        this.push(null); // End the stream
+      } else {
+        this.push(value); // Push the chunk to the stream
+      }
+    },
+  }) as ReadableWithHeaders;
+
+  // Attach headers from NextRequest to the Readable stream
+  stream.headers = Object.fromEntries(request.headers.entries()) as Record<string, string>;
+
+  return stream;
+}
+
+export async function POST(req: NextRequest) {
   try {
-    const { question, options } = await req.json();
-    if (!question || !Array.isArray(options) || options.length < 2) {
+    // Convert the Web ReadableStream into a Node.js Readable stream
+    const reqStream = readableFromStream(req);
+
+    const form = formidable({ uploadDir: './public/uploads', keepExtensions: true });
+
+    const [fields, files]: [formidable.Fields, formidable.Files] = await new Promise((resolve, reject) => {
+      // Pass the stream and headers to formidable
+      form.parse(reqStream as any, (err, fields, files) => {
+        if (err) reject(err);
+        resolve([fields, files]);
+      });
+    });
+
+    // Extract fields
+    const { username, passwordHash } = fields;
+
+    // Handle profile picture upload
+    let profilePictureUrl: string | null = null;
+    if (files.profilePicture) {
+      if (Array.isArray(files.profilePicture)) {
+        profilePictureUrl = `/uploads/${path.basename((files.profilePicture[0] as formidable.File).filepath)}`;
+      } else {
+        profilePictureUrl = `/uploads/${path.basename((files.profilePicture as formidable.File).filepath)}`;
+      }
+    }
+
+    // Validate input
+    if (!username || !passwordHash) {
       return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
     }
 
-    const newPoll = await prisma.poll.create({
+    // Create the user in the database
+    const newUser = await prisma.user.create({
       data: {
-        question,
-        options, // Ensure `options` is a JSON field in the schema
+        username: username.toString(),
+        passwordHash: passwordHash.toString(),
+        profileImage: profilePictureUrl,
       },
     });
-    return NextResponse.json(newPoll, { status: 201 });
-  } catch (error) {
-    console.error('Error creating poll:', error);
-    return NextResponse.json({ error: 'Failed to create poll' }, { status: 500 });
-  }
-}
 
-// Handle PUT requests: Update poll votes
-export async function PUT(req: Request) {
-  try {
-    const { id, votes } = await req.json();
-    if (!id || typeof id !== 'number' || !votes || typeof votes !== 'object') {
-      return NextResponse.json({ error: 'Invalid input' }, { status: 400 });
-    }
-
-    const updatedPoll = await prisma.poll.update({
-      where: { id },
-      data: { votes }, // Ensure `votes` exists in the schema
-    });
-    return NextResponse.json(updatedPoll, { status: 200 });
+    return NextResponse.json(newUser, { status: 201 });
   } catch (error) {
-    console.error('Error updating poll:', error);
-    return NextResponse.json({ error: 'Failed to update poll' }, { status: 500 });
+    console.error('Error creating user:', error);
+    return NextResponse.json({ error: 'Failed to create user', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }

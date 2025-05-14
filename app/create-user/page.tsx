@@ -1,101 +1,86 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function CreateUser() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [profileImage, setProfileImage] = useState<File | null>(null);
+  const [profilePicture, setProfilePicture] = useState<File | null>(null);
+  const [message, setMessage] = useState('');
+  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    if (!username || !password || !profileImage) {
-      alert('All fields are required!');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('username', username);
-    formData.append('password', password);
-    formData.append('profileImage', profileImage);
-
     try {
+      const formData = new FormData();
+      formData.append('username', username);
+      formData.append('passwordHash', password);
+      if (profilePicture) {
+        formData.append('profilePicture', profilePicture);
+      }
+
       const response = await fetch('/api/users', {
         method: 'POST',
         body: formData,
       });
 
       if (response.ok) {
-        alert('User created successfully!');
-        setUsername('');
-        setPassword('');
-        setProfileImage(null);
+        setMessage('User created successfully! Redirecting to polls...');
+        setTimeout(() => {
+          router.push('/polls');
+        }, 2000);
       } else {
-        const error = await response.json();
-        alert(`Error: ${error.message}`);
+        const errorData = await response.json();
+        setMessage(`Error: ${errorData.error}`);
       }
     } catch (error) {
-      console.error('Error creating user:', error);
-      alert('Failed to create user. Please try again.');
+      if (error instanceof Error) {
+        setMessage(`Error: ${error.message}`);
+      } else {
+        setMessage('An unknown error occurred.');
+      }
     }
   };
 
   return (
-    <div style={{ padding: '20px', textAlign: 'center' }}>
-      <h1>Create a New User</h1>
-      <form
-        onSubmit={handleSubmit}
-        style={{ maxWidth: '400px', margin: '0 auto', textAlign: 'left' }}
-      >
-        <div style={{ marginBottom: '10px' }}>
-          <label>Username:</label>
+    <div>
+      <h1>Create User</h1>
+      <form onSubmit={handleSubmit}>
+        <div>
+          <label htmlFor="username">Username:</label>
           <input
+            id="username"
             type="text"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            style={{ width: '100%', padding: '8px' }}
+            required
           />
         </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Password:</label>
+        <div>
+          <label htmlFor="password">Password:</label>
           <input
+            id="password"
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            style={{ width: '100%', padding: '8px' }}
+            required
           />
         </div>
-        <div style={{ marginBottom: '10px' }}>
-          <label>Profile Image:</label>
+        <div>
+          <label htmlFor="profilePicture">Profile Picture:</label>
           <input
+            id="profilePicture"
             type="file"
             accept="image/*"
-            onChange={(e) => setProfileImage(e.target.files?.[0] || null)}
-            style={{ width: '100%', padding: '8px' }}
+            onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
           />
         </div>
-        <div style={{ marginBottom: '10px', textAlign: 'center' }}>
-          <img
-            src={profileImage ? URL.createObjectURL(profileImage) : '/default-profile.png'}
-            alt={`${username}'s profile`}
-            style={{ width: '100px', height: '100px', borderRadius: '50%' }}
-          />
-        </div>
-        <button
-          type="submit"
-          style={{
-            backgroundColor: '#007bff',
-            color: '#fff',
-            padding: '10px 20px',
-            borderRadius: '4px',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          Create User
-        </button>
+        <button type="submit">Create User</button>
       </form>
+
+      {message && <p>{message}</p>}
     </div>
   );
 }

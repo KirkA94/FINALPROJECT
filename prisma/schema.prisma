@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  output   = "./node_modules/@prisma/client"
 }
 
 datasource db {
@@ -9,11 +8,12 @@ datasource db {
 }
 
 model User {
-  id       Int      @id @default(autoincrement())
-  username String   @unique
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
   passwordHash String
-  polls    Poll[]   @relation("UserPolls")
-  votes    Vote[]   // Optional: If tracking individual votes
+  profileImage String?  // Optional profile image
+  polls        Poll[]   @relation("UserPolls")
+  votes        Vote[]   // Optional: If tracking individual votes
 }
 
 model Poll {
@@ -21,7 +21,7 @@ model Poll {
   question  String
   createdAt DateTime  @default(now())
   userId    Int
-  options   Option[]  @relation("PollOptions") // Refactored from Json to a related model
+  options   Option[]  @relation("PollOptions") // Relation to Option model
   user      User      @relation("UserPolls", fields: [userId], references: [id])
   votes     Vote[]    // Optional: If tracking individual votes
 }
