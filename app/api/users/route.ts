@@ -88,3 +88,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Failed to create user', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }
+
+export async function GET() {
+  try {
+    // Fetch all users from the database
+    const users = await prisma.user.findMany();
+
+    // Return the users
+    return NextResponse.json(users, { status: 200 });
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    return NextResponse.json({ error: 'Failed to fetch users', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
+  }
+}
