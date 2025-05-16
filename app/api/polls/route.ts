@@ -47,6 +47,35 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PATCH(req: Request) {
+  try {
+    const { optionId } = await req.json();
+
+    if (!optionId) {
+      return NextResponse.json(
+        { error: 'Invalid input: optionId is required.' },
+        { status: 400 }
+      );
+    }
+
+    // Increment the vote count for the specified option
+    const updatedOption = await prisma.option.update({
+      where: { id: optionId },
+      data: {
+        votes: { increment: 1 },
+      },
+    });
+
+    return NextResponse.json(updatedOption, { status: 200 });
+  } catch (error) {
+    console.error('Error updating poll option:', error);
+    return NextResponse.json(
+      { error: 'Failed to update poll option.' },
+      { status: 500 }
+    );
+  }
+}
+
 export async function GET() {
   try {
     const polls = await prisma.poll.findMany({

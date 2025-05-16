@@ -29,6 +29,7 @@ model Poll {
 model Option {
   id      Int     @id @default(autoincrement())
   text    String
+  votes   Int     @default(0) // Tracks the vote count for this option
   pollId  Int
   poll    Poll    @relation("PollOptions", fields: [pollId], references: [id]) // Poll this option belongs to
 }

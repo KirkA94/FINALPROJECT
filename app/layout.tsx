@@ -3,6 +3,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { AuthProvider } from './context/AuthContext';
 import AuthButtons from './components/AuthButtons'; // Import AuthButtons
+import './styles/dashboard.css';
 
 export const metadata = {
   title: 'MyPolls By Kirk Austin',
