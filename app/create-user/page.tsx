@@ -27,7 +27,9 @@ export default function CreateUser() {
       });
 
       if (response.ok) {
+        const data = await response.json();
         setMessage('User created successfully! Redirecting to polls...');
+        localStorage.setItem('authToken', data.token); // Store the token for future requests
         setTimeout(() => {
           router.push('/polls');
         }, 2000);
@@ -36,11 +38,7 @@ export default function CreateUser() {
         setMessage(`Error: ${errorData.error}`);
       }
     } catch (error) {
-      if (error instanceof Error) {
-        setMessage(`Error: ${error.message}`);
-      } else {
-        setMessage('An unknown error occurred.');
-      }
+      setMessage('An error occurred. Please try again.');
     }
   };
 

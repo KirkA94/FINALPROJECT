@@ -12,8 +12,8 @@ model User {
   username     String   @unique
   passwordHash String
   profileImage String?  // Optional profile image
-  polls        Poll[]   @relation("UserPolls")
-  votes        Vote[]   // Optional: If tracking individual votes
+  polls        Poll[]   @relation("UserPolls") // Relation to polls created by the user
+  votes        Vote[]   // Relation to votes cast by the user
 }
 
 model Poll {
@@ -21,16 +21,16 @@ model Poll {
   question  String
   createdAt DateTime  @default(now())
   userId    Int
-  options   Option[]  @relation("PollOptions") // Relation to Option model
-  user      User      @relation("UserPolls", fields: [userId], references: [id])
-  votes     Vote[]    // Optional: If tracking individual votes
+  options   Option[]  @relation("PollOptions") // Relation to options for this poll
+  user      User      @relation("UserPolls", fields: [userId], references: [id]) // Creator of the poll
+  votes     Vote[]    // Relation to votes for this poll
 }
 
 model Option {
   id      Int     @id @default(autoincrement())
   text    String
   pollId  Int
-  poll    Poll    @relation("PollOptions", fields: [pollId], references: [id])
+  poll    Poll    @relation("PollOptions", fields: [pollId], references: [id]) // Poll this option belongs to
 }
 
 model Vote {
@@ -38,6 +38,6 @@ model Vote {
   userId  Int
   pollId  Int
   choice  String
-  poll    Poll   @relation(fields: [pollId], references: [id])
-  user    User   @relation(fields: [userId], references: [id])
+  poll    Poll   @relation(fields: [pollId], references: [id]) // Poll this vote is associated with
+  user    User   @relation(fields: [userId], references: [id]) // User who cast the vote
 }
