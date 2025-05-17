@@ -29,16 +29,18 @@ model Poll {
 model Option {
   id      Int     @id @default(autoincrement())
   text    String
-  votes   Int     @default(0) // Tracks the vote count for this option
+  votes   Vote[]  @relation("OptionVotes") // Relation to votes for this option
   pollId  Int
   poll    Poll    @relation("PollOptions", fields: [pollId], references: [id]) // Poll this option belongs to
 }
 
 model Vote {
-  id      Int    @id @default(autoincrement())
-  userId  Int
-  pollId  Int
-  choice  String
-  poll    Poll   @relation(fields: [pollId], references: [id]) // Poll this vote is associated with
-  user    User   @relation(fields: [userId], references: [id]) // User who cast the vote
+  id       Int     @id @default(autoincrement())
+  userId   Int
+  pollId   Int
+  optionId Int?    // Add this field to link a vote to a specific option
+  choice   String
+  poll     Poll    @relation(fields: [pollId], references: [id]) // Poll this vote is associated with
+  option   Option? @relation("OptionVotes", fields: [optionId], references: [id]) // Relation to the Option model
+  user     User    @relation(fields: [userId], references: [id]) // User who cast the vote
 }

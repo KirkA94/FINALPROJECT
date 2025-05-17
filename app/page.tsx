@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AuthButtons from './components/AuthButtons';
 
-
 type Poll = {
   id: number;
   question: string;
@@ -12,18 +11,28 @@ type Poll = {
 
 export default function Home() {
   const [recentPolls, setRecentPolls] = useState<Poll[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   // Fetch the most recent polls on mount
   useEffect(() => {
     const fetchRecentPolls = async () => {
+      setLoading(true);
+      setError('');
       try {
         const response = await fetch('/api/polls');
+        if (!response.ok) {
+          throw new Error('Failed to fetch recent polls.');
+        }
         const data = await response.json();
         // Limit to the 5 most recent polls
         setRecentPolls(data.slice(0, 5));
       } catch (error) {
-        console.error('Failed to fetch recent polls:', error);
+        console.error(error);
+        setError('Unable to load recent polls. Please try again later.');
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -64,7 +73,11 @@ export default function Home() {
 
       <div style={{ marginTop: '30px' }}>
         <h2>Most Recent Polls</h2>
-        {recentPolls.length > 0 ? (
+        {loading ? (
+          <p>Loading recent polls...</p>
+        ) : error ? (
+          <p style={{ color: 'red' }}>{error}</p>
+        ) : recentPolls.length > 0 ? (
           <ul style={{ listStyle: 'none', padding: 0 }}>
             {recentPolls.map((poll) => (
               <li
