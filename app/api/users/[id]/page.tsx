@@ -1,49 +1,71 @@
 import { prisma } from '@/lib/prisma'; // Import the singleton Prisma Client
 import { notFound } from 'next/navigation';
+import Image from 'next/image'; // Use Next.js's Image component for better image optimization
 import { Prisma } from '@prisma/client'; // Import Prisma namespace
-import { Key, ReactElement, JSXElementConstructor, ReactNode, ReactPortal } from 'react';
 
 export default async function UserProfile({ params }: { params: { id: string } }) {
+  // Validate and parse the user ID
   const userId = Number(params.id);
 
-  // Validate the user ID
   if (isNaN(userId)) {
     return <p>Invalid user ID.</p>;
   }
 
   try {
-    // Fetch the user and their polls
+    // Fetch the user and their polls from the database
     const user = await prisma.user.findUnique({
       where: { id: userId },
       include: { polls: true },
     });
-    type UserWithPolls = { id: number; username: string; profileImage: string | null; polls: { id: number; question: string }[] };
-    const userWithPolls = user as UserWithPolls;
+
     if (!user) {
-      return notFound(); // Use Next.js's built-in 404 handling
-    }
-    if (!user) {
-      notFound(); // Use Next.js's built-in 404 handling
+      return notFound(); // Return 404 page if the user does not exist
     }
 
+    // Define the user and poll types explicitly
+    type UserWithPolls = {
+      id: number;
+      username: string;
+      profileImage: string | null;
+      polls: { id: number; question: string }[];
+    };
+
+    const userWithPolls = user as UserWithPolls;
+
     return (
-      <div style={{ padding: '20px' }}>
-        <h1>{user.username}'s Profile</h1>
-        <img
-          src={user.profileImage || '/default-profile.png'}
-          alt={`${user.username}'s profile`}
-          style={{ width: '100px', height: '100px', borderRadius: '50%' }}
-        />
+      <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
+        <h1 style={{ textAlign: 'center' }}>{userWithPolls.username}'s Profile</h1>
+        <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+          <Image
+            src={userWithPolls.profileImage || '/default-profile.png'}
+            alt={`${userWithPolls.username}'s profile`}
+            width={100}
+            height={100}
+            style={{ borderRadius: '50%' }}
+          />
+        </div>
         <h2>Polls Created:</h2>
-        <ul>
-            {user.polls.map((poll: { id: number; question: string }) => (
-            <li key={poll.id}>{poll.question}</li>
+        {userWithPolls.polls.length > 0 ? (
+          <ul>
+            {userWithPolls.polls.map((poll) => (
+              <li key={poll.id} style={{ marginBottom: '10px' }}>
+                {poll.question}
+              </li>
             ))}
-        </ul>
+          </ul>
+        ) : (
+          <p>No polls created yet.</p>
+        )}
       </div>
     );
   } catch (error) {
     console.error('Error fetching user:', error);
+
+    // Handle specific Prisma errors if needed
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      return <p>A database error occurred. Please try again later.</p>;
+    }
+
     return <p>Something went wrong. Please try again later.</p>;
   }
 }

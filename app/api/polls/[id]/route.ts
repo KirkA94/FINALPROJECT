@@ -3,8 +3,8 @@ import { prisma } from '../../../../lib/prisma'; // Adjust the path to your Pris
 
 export async function GET(req: Request, context: { params: { id: string } }) {
   try {
-    // Destructure and await the params object
-    const { id } = context.params;
+    // Await the params object before destructuring
+    const { id } = await context.params;
 
     if (!id) {
       return NextResponse.json({ error: 'Poll ID is required' }, { status: 400 });
