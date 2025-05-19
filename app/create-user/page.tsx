@@ -8,37 +8,44 @@ export default function CreateUser() {
   const [password, setPassword] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false); // Track submission state
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setIsSubmitting(true); // Indicate that the form is being submitted
+    setMessage(''); // Clear any existing messages
 
     try {
+      // Use FormData to handle file upload
       const formData = new FormData();
       formData.append('username', username);
-      formData.append('passwordHash', password);
+      formData.append('password', password);
       if (profilePicture) {
         formData.append('profilePicture', profilePicture);
       }
 
       const response = await fetch('/api/users', {
         method: 'POST',
-        body: formData,
+        body: formData, // Send FormData for multipart/form-data
       });
 
       if (response.ok) {
         const data = await response.json();
-        setMessage('User created successfully! Redirecting to polls...');
-        localStorage.setItem('authToken', data.token); // Store the token for future requests
+        setMessage('User created successfully! Redirecting to homepage...');
+        localStorage.setItem('authToken', data.token); // Store the token
         setTimeout(() => {
-          router.push('/polls');
+          router.push('/'); // Redirect to homepage
         }, 2000);
       } else {
         const errorData = await response.json();
         setMessage(`Error: ${errorData.error}`);
       }
     } catch (error) {
+      console.error('Error creating user:', error);
       setMessage('An error occurred. Please try again.');
+    } finally {
+      setIsSubmitting(false); // Reset submission state
     }
   };
 
@@ -54,6 +61,7 @@ export default function CreateUser() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
+            disabled={isSubmitting} // Disable input during submission
           />
         </div>
         <div>
@@ -64,6 +72,7 @@ export default function CreateUser() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={isSubmitting} // Disable input during submission
           />
         </div>
         <div>
@@ -73,9 +82,12 @@ export default function CreateUser() {
             type="file"
             accept="image/*"
             onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
+            disabled={isSubmitting} // Disable input during submission
           />
         </div>
-        <button type="submit">Create User</button>
+        <button type="submit" disabled={isSubmitting}> {/* Disable button during submission */}
+          {isSubmitting ? 'Submitting...' : 'Create User'}
+        </button>
       </form>
 
       {message && <p>{message}</p>}

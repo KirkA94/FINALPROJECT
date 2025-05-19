@@ -1,13 +1,14 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext'; // Ensure correct path
+import { useRouter } from 'next/navigation';
 
 export default function AuthButtons() {
   const { isAuthenticated, login, logout } = useAuth();
+  const router = useRouter();
 
   const handleLogin = async () => {
-    // Show a login form or redirect to a login page
     const username = prompt('Enter your username:');
     const password = prompt('Enter your password:');
 
@@ -21,19 +22,23 @@ export default function AuthButtons() {
 
         if (response.ok) {
           const data = await response.json();
-          login(data.token); // Pass the JWT to the login function
+          login(data.token, data.user); // Pass the JWT and user object to the login function
+          alert('Login successful!');
+          router.push('/dashboard'); // Redirect after login
         } else {
           alert('Invalid credentials');
         }
       } catch (error) {
         console.error('Login error:', error);
-        alert('Failed to login');
+        alert('Failed to login. Please try again.');
       }
     }
   };
 
   const handleLogout = () => {
     logout(); // Clear the token and update the auth state
+    alert('You have logged out.');
+    router.push('/'); // Redirect to home after logout
   };
 
   return (

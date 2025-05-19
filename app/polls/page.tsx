@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { useAuth } from '../context/AuthContext'; // Ensure this is the correct path to your AuthContext
 
 type Poll = {
   id: number;
@@ -13,6 +15,8 @@ export default function PollsDashboard() {
   const [polls, setPolls] = useState<Poll[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const { isAuthenticated } = useAuth(); // Get the authentication state
+  const router = useRouter();
 
   useEffect(() => {
     const fetchPolls = async () => {
@@ -41,6 +45,24 @@ export default function PollsDashboard() {
   return (
     <div style={{ padding: '20px' }}>
       <h1>Polls Dashboard</h1>
+      {isAuthenticated && (
+        <div style={{ marginBottom: '20px' }}>
+          <button
+            onClick={() => router.push('/polls/create')} // Redirect to poll creation page
+            style={{
+              padding: '10px 20px',
+              fontSize: '16px',
+              backgroundColor: '#007bff',
+              color: 'white',
+              border: 'none',
+              borderRadius: '5px',
+              cursor: 'pointer',
+            }}
+          >
+            Create Poll
+          </button>
+        </div>
+      )}
       {error ? (
         <p style={{ color: 'red' }}>{error}</p>
       ) : polls.length > 0 ? (

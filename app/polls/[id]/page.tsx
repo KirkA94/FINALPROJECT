@@ -19,6 +19,7 @@ type Poll = {
 export default function PollPage({ params }: { params: { id: string } }) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const router = useRouter();
 
   useEffect(() => {
@@ -33,7 +34,7 @@ export default function PollPage({ params }: { params: { id: string } }) {
         setPoll(data);
       } catch (error) {
         console.error('Failed to fetch poll:', error);
-        router.push('/404'); // Redirect to 404 on error
+        setError('Failed to load poll. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -42,7 +43,29 @@ export default function PollPage({ params }: { params: { id: string } }) {
     fetchPoll();
   }, [params.id, router]);
 
+  const handleVote = async (optionId: number) => {
+    try {
+      const response = await fetch(`/api/polls/${params.id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ optionId }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to cast vote');
+      }
+
+      const updatedPoll = await response.json();
+      setPoll(updatedPoll); // Refresh poll data with updated vote counts
+    } catch (error) {
+      console.error('Error voting:', error);
+      setError('Failed to cast vote. Please try again.');
+    }
+  };
+
   if (loading) return <p>Loading poll...</p>;
+
+  if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   if (!poll) return <p>Poll not found.</p>;
 
@@ -55,6 +78,20 @@ export default function PollPage({ params }: { params: { id: string } }) {
         {poll.options.map((option) => (
           <li key={option.id} style={{ marginBottom: '20px' }}>
             <strong>{option.text}</strong> - Votes: {option.votes.length}
+            <button
+              style={{
+                marginLeft: '10px',
+                padding: '5px 10px',
+                backgroundColor: '#007bff',
+                color: 'white',
+                border: 'none',
+                borderRadius: '5px',
+                cursor: 'pointer',
+              }}
+              onClick={() => handleVote(option.id)}
+            >
+              Vote
+            </button>
             <details style={{ marginTop: '10px' }}>
               <summary>See who voted</summary>
               <ul>

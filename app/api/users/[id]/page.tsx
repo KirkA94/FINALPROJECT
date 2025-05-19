@@ -4,9 +4,11 @@ import Image from 'next/image'; // Use Next.js's Image component for better imag
 import { Prisma } from '@prisma/client'; // Import Prisma namespace
 
 export default async function UserProfile({ params }: { params: { id: string } }) {
-  // Validate and parse the user ID
-  const userId = Number(params.id);
+  // Await the params object before accessing its properties
+  const { id } = await params;
+  const userId = Number(id);
 
+  // Validate the user ID
   if (isNaN(userId)) {
     return <p>Invalid user ID.</p>;
   }
