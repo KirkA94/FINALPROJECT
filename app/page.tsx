@@ -23,14 +23,23 @@ export default function Home() {
       try {
         const response = await fetch('/api/polls');
         if (!response.ok) {
+          const errorText = await response.text();
+          console.error('API Error:', errorText);
           throw new Error('Failed to fetch recent polls.');
         }
         const data = await response.json();
+
+        // Validate the API response
+        if (!Array.isArray(data) || !data.every((poll) => typeof poll.id === 'number' && typeof poll.question === 'string')) {
+          console.error('Unexpected response format:', data);
+          throw new Error('Unexpected response format from the server.');
+        }
+
         // Limit to the 5 most recent polls
         setRecentPolls(data.slice(0, 5));
       } catch (error) {
-        console.error(error);
-        setError('Unable to load recent polls. Please try again later.');
+        console.error('Error fetching recent polls:', error);
+        setError((error as Error).message || 'Unable to load recent polls. Please try again later.');
       } finally {
         setLoading(false);
       }
@@ -39,19 +48,27 @@ export default function Home() {
     fetchRecentPolls();
   }, []);
 
+  const handleNavigation = (path: string) => {
+    router.push(path);
+  };
+
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
       <h1>MyPolls</h1>
       <h5>By: Kirk Austin</h5>
       <p>Welcome to MyPolls, where you can create and participate in exciting polls!</p>
-      
+
       <div style={{ margin: '20px 0' }}>
         <button
-          onClick={() => router.push('/polls')}
+          onClick={() => handleNavigation('/polls')}
           style={{
             margin: '10px',
             padding: '10px 20px',
             fontSize: '16px',
+            backgroundColor: '#007bff',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
             cursor: 'pointer',
           }}
         >
@@ -59,17 +76,23 @@ export default function Home() {
         </button>
 
         <button
-          onClick={() => router.push('/create-user')}
+          onClick={() => handleNavigation('/create-user')}
           style={{
             margin: '10px',
             padding: '10px 20px',
             fontSize: '16px',
+            backgroundColor: '#28a745',
+            color: 'white',
+            border: 'none',
+            borderRadius: '5px',
             cursor: 'pointer',
           }}
         >
           Create User
         </button>
       </div>
+
+      <AuthButtons />
 
       <div style={{ marginTop: '30px' }}>
         <h2>Most Recent Polls</h2>
@@ -88,8 +111,12 @@ export default function Home() {
                   border: '1px solid #ccc',
                   borderRadius: '5px',
                   cursor: 'pointer',
+                  backgroundColor: '#f9f9f9',
+                  transition: 'background-color 0.3s',
                 }}
-                onClick={() => router.push(`/polls/${poll.id}`)}
+                onClick={() => handleNavigation(`/polls/${poll.id}`)}
+                onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f1f1')}
+                onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f9f9f9')}
               >
                 {poll.question}
               </li>

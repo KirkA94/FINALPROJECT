@@ -39,7 +39,7 @@ export default function CreateUser() {
         }, 2000);
       } else {
         const errorData = await response.json();
-        setMessage(`Error: ${errorData.error}`);
+        setMessage(`Error: ${errorData.message}`);
       }
     } catch (error) {
       console.error('Error creating user:', error);

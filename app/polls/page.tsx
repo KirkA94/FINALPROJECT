@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '../context/AuthContext'; // Ensure this is the correct path to your AuthContext
@@ -13,32 +13,30 @@ type Poll = {
 
 export default function PollsDashboard() {
   const [polls, setPolls] = useState<Poll[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true); // Default to true for initial loading
+  const [error, setError] = useState<string | null>(null);
   const { isAuthenticated } = useAuth(); // Get the authentication state
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchPolls = async () => {
-      setLoading(true);
-      setError('');
-      try {
-        const response = await fetch('/api/polls');
-        if (!response.ok) {
-          throw new Error('Failed to fetch polls.');
-        }
-        const data = await response.json();
-        setPolls(data);
-      } catch (error) {
-        console.error(error);
-        setError('Unable to load polls. Please try again later.');
-      } finally {
-        setLoading(false);
+  const fetchPolls = useCallback(async () => {
+    try {
+      const response = await fetch('/api/polls');
+      if (!response.ok) {
+        throw new Error('Failed to fetch polls.');
       }
-    };
-
-    fetchPolls();
+      const data = await response.json();
+      setPolls(data);
+    } catch (error) {
+      console.error(error);
+      setError('Unable to load polls. Please try again later.');
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  useEffect(() => {
+    fetchPolls();
+  }, [fetchPolls]);
 
   if (loading) return <p>Loading polls...</p>;
 
@@ -66,31 +64,33 @@ export default function PollsDashboard() {
       {error ? (
         <p style={{ color: 'red' }}>{error}</p>
       ) : polls.length > 0 ? (
-        polls.map((poll) => (
-          <div
-            key={poll.id}
-            style={{
-              marginBottom: '20px',
-              padding: '15px',
-              border: '1px solid #ddd',
-              borderRadius: '5px',
-            }}
-          >
-            <Link
-              href={`/polls/${poll.id}`}
-              style={{ textDecoration: 'none', color: '#007bff' }}
+        <div>
+          {polls.map((poll) => (
+            <div
+              key={poll.id}
+              style={{
+                marginBottom: '20px',
+                padding: '15px',
+                border: '1px solid #ddd',
+                borderRadius: '5px',
+              }}
             >
-              <h2>{poll.question}</h2>
-            </Link>
-            <ul>
-              {poll.options.map((option) => (
-                <li key={option.id}>
-                  {option.text} - Votes: {option.votes}
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))
+              <Link
+                href={`/polls/${poll.id}`}
+                style={{ textDecoration: 'none', color: '#007bff' }}
+              >
+                <h2>{poll.question}</h2>
+              </Link>
+              <ul>
+                {poll.options.map((option) => (
+                  <li key={option.id}>
+                    {option.text} - Votes: {option.votes}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
       ) : (
         <p>No polls available.</p>
       )}

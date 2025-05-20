@@ -14,12 +14,13 @@ model User {
   profileImage String?  // Optional profile image
   polls        Poll[]   @relation("UserPolls") // Relation to polls created by the user
   votes        Vote[]   // Relation to votes cast by the user
+  createdAt    DateTime @default(now()) // Timestamp for when the user was created
 }
 
 model Poll {
   id        Int       @id @default(autoincrement())
   question  String
-  createdAt DateTime  @default(now())
+  createdAt DateTime  @default(now()) // Timestamp for when the poll was created
   userId    Int
   options   Option[]  @relation("PollOptions") // Relation to options for this poll
   user      User      @relation("UserPolls", fields: [userId], references: [id]) // Creator of the poll
@@ -38,8 +39,9 @@ model Vote {
   id       Int     @id @default(autoincrement())
   userId   Int
   pollId   Int
-  optionId Int?    // Add this field to link a vote to a specific option
-  choice   String
+  optionId Int?    // Optional field to link a vote to a specific option
+  choice   String  // Description of the vote choice
+  createdAt DateTime @default(now()) // Timestamp for when the vote was created
   poll     Poll    @relation(fields: [pollId], references: [id]) // Poll this vote is associated with
   option   Option? @relation("OptionVotes", fields: [optionId], references: [id]) // Relation to the Option model
   user     User    @relation(fields: [userId], references: [id]) // User who cast the vote

@@ -1,70 +1,51 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-
-type PollOption = {
-  id: number;
-  text: string;
-  votes: { id: number; choice: string; user: { username: string } }[];
-};
 
 type Poll = {
   id: number;
   question: string;
-  options: PollOption[];
+  options: { id: number; text: string; votes: number }[];
   user: { username: string };
 };
 
-export default function PollPage({ params }: { params: { id: string } }) {
+export default function PollPage({ params }: { params: Promise<{ id: string }> }) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchPoll = async () => {
-      try {
-        const res = await fetch(`/api/polls/${params.id}`);
-        if (!res.ok) {
-          router.push('/404'); // Redirect to 404 if poll not found
-          return;
-        }
-        const data = await res.json();
-        setPoll(data);
-      } catch (error) {
-        console.error('Failed to fetch poll:', error);
-        setError('Failed to load poll. Please try again later.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPoll();
-  }, [params.id, router]);
-
-  const handleVote = async (optionId: number) => {
+  const fetchPoll = useCallback(async () => {
     try {
-      const response = await fetch(`/api/polls/${params.id}/vote`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ optionId }),
-      });
+      const resolvedParams = await params; // Await the params promise
+      const pollId = Number(resolvedParams.id);
 
-      if (!response.ok) {
-        throw new Error('Failed to cast vote');
+      if (isNaN(pollId)) {
+        throw new Error('Invalid poll ID.');
       }
 
-      const updatedPoll = await response.json();
-      setPoll(updatedPoll); // Refresh poll data with updated vote counts
-    } catch (error) {
-      console.error('Error voting:', error);
-      setError('Failed to cast vote. Please try again.');
+      // Fetch the poll data
+      const response = await fetch(`/api/polls/${pollId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch poll.');
+      }
+
+      const data = await response.json();
+      setPoll(data);
+    } catch (err) {
+      console.error('Error fetching poll:', err);
+      setError('Failed to load poll. Please try again later.');
+    } finally {
+      setLoading(false);
     }
-  };
+  }, [params]);
+
+  useEffect(() => {
+    fetchPoll();
+  }, [fetchPoll]);
 
   if (loading) return <p>Loading poll...</p>;
-
   if (error) return <p style={{ color: 'red' }}>{error}</p>;
 
   if (!poll) return <p>Poll not found.</p>;
@@ -76,32 +57,8 @@ export default function PollPage({ params }: { params: { id: string } }) {
 
       <ul>
         {poll.options.map((option) => (
-          <li key={option.id} style={{ marginBottom: '20px' }}>
-            <strong>{option.text}</strong> - Votes: {option.votes.length}
-            <button
-              style={{
-                marginLeft: '10px',
-                padding: '5px 10px',
-                backgroundColor: '#007bff',
-                color: 'white',
-                border: 'none',
-                borderRadius: '5px',
-                cursor: 'pointer',
-              }}
-              onClick={() => handleVote(option.id)}
-            >
-              Vote
-            </button>
-            <details style={{ marginTop: '10px' }}>
-              <summary>See who voted</summary>
-              <ul>
-                {option.votes.map((vote) => (
-                  <li key={vote.id}>
-                    {vote.user.username} - {vote.choice}
-                  </li>
-                ))}
-              </ul>
-            </details>
+          <li key={option.id}>
+            <strong>{option.text}</strong> - Votes: {option.votes}
           </li>
         ))}
       </ul>
