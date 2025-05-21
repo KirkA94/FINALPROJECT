@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '../context/AuthContext'; // Ensure this is the correct path to your AuthContext
+import { useAuth } from '../context/AuthContext'; // Updated path to match the correct location
 
 type Poll = {
   id: number;

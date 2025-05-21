@@ -3,10 +3,10 @@ import { notFound } from 'next/navigation';
 import Image from 'next/image'; // Use Next.js's Image component for better image optimization
 import { Prisma } from '@prisma/client'; // Import Prisma namespace
 
-export default async function UserProfile({ params }: { params: { id: string } }) {
-  // Await the params object before accessing its properties
+export default async function UserProfile({ params }: { params: Promise<{ id: string }> }) {
+  // Ensure `params` is awaited before accessing its properties
   const { id } = await params;
-  const userId = Number(id);
+  const userId = parseInt(id, 10);
 
   // Validate the user ID
   if (isNaN(userId)) {
@@ -24,32 +24,22 @@ export default async function UserProfile({ params }: { params: { id: string } }
       return notFound(); // Return 404 page if the user does not exist
     }
 
-    // Define the user and poll types explicitly
-    type UserWithPolls = {
-      id: number;
-      username: string;
-      profileImage: string | null;
-      polls: { id: number; question: string }[];
-    };
-
-    const userWithPolls = user as UserWithPolls;
-
     return (
       <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-        <h1 style={{ textAlign: 'center' }}>{userWithPolls.username}'s Profile</h1>
+        <h1 style={{ textAlign: 'center' }}>{user.username}'s Profile</h1>
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <Image
-            src={userWithPolls.profileImage || '/default-profile.png'}
-            alt={`${userWithPolls.username}'s profile`}
+            src={user.profileImage || '/default-profile.png'}
+            alt={`${user.username}'s profile`}
             width={100}
             height={100}
             style={{ borderRadius: '50%' }}
           />
         </div>
         <h2>Polls Created:</h2>
-        {userWithPolls.polls.length > 0 ? (
+        {user.polls.length > 0 ? (
           <ul>
-            {userWithPolls.polls.map((poll) => (
+            {user.polls.map((poll) => (
               <li key={poll.id} style={{ marginBottom: '10px' }}>
                 {poll.question}
               </li>

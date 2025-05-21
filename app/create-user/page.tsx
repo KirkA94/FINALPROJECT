@@ -2,22 +2,29 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/app/context/AuthContext'; // Adjust the path as needed
 
 export default function CreateUser() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [profilePicture, setProfilePicture] = useState<File | null>(null);
   const [message, setMessage] = useState('');
-  const [isSubmitting, setIsSubmitting] = useState(false); // Track submission state
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setIsSubmitting(true); // Indicate that the form is being submitted
-    setMessage(''); // Clear any existing messages
+    setIsSubmitting(true);
+    setMessage('');
+
+    if (username.length < 3 || password.length < 6) {
+      setMessage('Error: Username must be at least 3 characters and password at least 6 characters.');
+      setIsSubmitting(false);
+      return;
+    }
 
     try {
-      // Use FormData to handle file upload
       const formData = new FormData();
       formData.append('username', username);
       formData.append('password', password);
@@ -27,25 +34,25 @@ export default function CreateUser() {
 
       const response = await fetch('/api/users', {
         method: 'POST',
-        body: formData, // Send FormData for multipart/form-data
+        body: formData,
       });
 
       if (response.ok) {
         const data = await response.json();
         setMessage('User created successfully! Redirecting to homepage...');
-        localStorage.setItem('authToken', data.token); // Store the token
+        login(data.token, data.user); // Use AuthContext to log in
         setTimeout(() => {
-          router.push('/'); // Redirect to homepage
+          router.push('/');
         }, 2000);
       } else {
         const errorData = await response.json();
-        setMessage(`Error: ${errorData.message}`);
+        setMessage(`Error: ${errorData.error || 'Unknown error occurred'}`);
       }
     } catch (error) {
       console.error('Error creating user:', error);
       setMessage('An error occurred. Please try again.');
     } finally {
-      setIsSubmitting(false); // Reset submission state
+      setIsSubmitting(false);
     }
   };
 
@@ -61,7 +68,7 @@ export default function CreateUser() {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             required
-            disabled={isSubmitting} // Disable input during submission
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -72,7 +79,7 @@ export default function CreateUser() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            disabled={isSubmitting} // Disable input during submission
+            disabled={isSubmitting}
           />
         </div>
         <div>
@@ -82,14 +89,13 @@ export default function CreateUser() {
             type="file"
             accept="image/*"
             onChange={(e) => setProfilePicture(e.target.files?.[0] || null)}
-            disabled={isSubmitting} // Disable input during submission
+            disabled={isSubmitting}
           />
         </div>
-        <button type="submit" disabled={isSubmitting}> {/* Disable button during submission */}
+        <button type="submit" disabled={isSubmitting}>
           {isSubmitting ? 'Submitting...' : 'Create User'}
         </button>
       </form>
-
       {message && <p>{message}</p>}
     </div>
   );

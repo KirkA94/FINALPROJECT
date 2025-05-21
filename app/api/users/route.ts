@@ -1,84 +1,97 @@
 import { NextRequest, NextResponse } from "next/server";
-import { parseForm } from "@/lib/formidable-helper"; // Use the helper function
-import { prisma } from "@/lib/prisma"; // Adjust the import path for Prisma
+import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
-import { promises as fs } from "fs";
+import jwt from "jsonwebtoken";
+import formidable, { Fields, Files, File } from "formidable";
+import { IncomingMessage } from "http";
 
+const SECRET_KEY = process.env.SECRET_KEY || "your_secret_key";
+
+// Disable Next.js's default body parser
 export const config = {
   api: {
-    bodyParser: false, // Disable default body parser to allow Formidable to parse the request
+    bodyParser: false,
   },
+};
+
+// Helper function to parse the form data
+const parseForm = (req: IncomingMessage): Promise<{ fields: Fields; files: Files }> => {
+  const form = new formidable.IncomingForm();
+  return new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) reject(err);
+      else resolve({ fields, files });
+    });
+  });
 };
 
 export async function POST(req: NextRequest) {
   try {
-    // Parse the incoming form data using the helper function
-    const { fields, files } = await parseForm(req);
+    // Parse form data using the helper function
+    const { fields, files } = await parseForm(req as unknown as IncomingMessage);
 
-    const { username, password } = fields;
-    const profilePicture = files?.profilePicture;
+    // Extract fields and files
+    const username = Array.isArray(fields.username) ? fields.username[0] : fields.username;
+    const password = Array.isArray(fields.password) ? fields.password[0] : fields.password;
 
-    // Validate required fields
+    // Type assertion for profilePicture
+    const profilePicture = files.profilePicture as File | undefined;
+    const profileImage = profilePicture ? profilePicture.filepath : null;
+
+    // Validate input
     if (!username || !password) {
       return NextResponse.json(
-        { message: "Missing required fields: username or password." },
+        { error: "Username and password are required." },
         { status: 400 }
       );
     }
 
-    // Check if username already exists
-    const existingUser = await prisma.user.findUnique({ where: { username: String(username) } });
-    if (existingUser) {
+    if (username.length < 3 || password.length < 6) {
       return NextResponse.json(
-        { message: "Username already exists." },
-        { status: 409 }
+        { error: "Username must be at least 3 characters and password at least 6 characters." },
+        { status: 400 }
       );
     }
 
-    // Hash the password before storing it
-    const hashedPassword = await bcrypt.hash(String(password), 10);
+    // Check if the username already exists
+    const existingUser = await prisma.user.findUnique({
+      where: { username },
+    });
 
-    // Handle profile picture upload
-    let profileImageUrl = null;
-    if (profilePicture) {
-      const file = Array.isArray(profilePicture) ? profilePicture[0] : profilePicture;
-      if (file?.filepath && file?.originalFilename) {
-        const newFilename = `${Date.now()}-${file.originalFilename}`;
-        const uploadPath = `./public/uploads/${newFilename}`;
-        await fs.mkdir('./public/uploads', { recursive: true }); // Ensure the uploads directory exists
-        await fs.rename(file.filepath, uploadPath); // Move file to uploads directory
-        profileImageUrl = `/uploads/${newFilename}`; // Public URL for the file
-      }
+    if (existingUser) {
+      return NextResponse.json(
+        { error: "Username already exists." },
+        { status: 400 }
+      );
     }
 
-    // Create the user in the database
+    // Hash the password
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    // Create the user
     const newUser = await prisma.user.create({
       data: {
-        username: String(username),
-        passwordHash: hashedPassword,
-        profileImage: profileImageUrl,
+        username,
+        passwordHash,
+        profileImage, // Save the file path or process it further if needed
       },
     });
 
-    // Return success response without exposing sensitive data
+    // Generate a JWT token
+    const token = jwt.sign(
+      { userId: newUser.id, username: newUser.username },
+      SECRET_KEY,
+      { expiresIn: "1h" }
+    );
+
     return NextResponse.json(
-      {
-        message: "User created successfully.",
-        user: {
-          id: newUser.id,
-          username: newUser.username,
-          profileImage: newUser.profileImage,
-        },
-      },
+      { message: "User created successfully.", user: newUser, token },
       { status: 201 }
     );
   } catch (error) {
     console.error("Error creating user:", error);
-
-    // Return a detailed error response
-    const errorMessage = error instanceof Error ? error.message : "Unknown error occurred.";
     return NextResponse.json(
-      { message: "Internal server error.", error: errorMessage },
+      { error: "An unexpected error occurred. Please try again later." },
       { status: 500 }
     );
   }

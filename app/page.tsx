@@ -52,6 +52,17 @@ export default function Home() {
     router.push(path);
   };
 
+  const buttonStyle = (bgColor: string) => ({
+    margin: '10px',
+    padding: '10px 20px',
+    fontSize: '16px',
+    backgroundColor: bgColor,
+    color: 'white',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+  });
+
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
       <h1>MyPolls</h1>
@@ -59,35 +70,11 @@ export default function Home() {
       <p>Welcome to MyPolls, where you can create and participate in exciting polls!</p>
 
       <div style={{ margin: '20px 0' }}>
-        <button
-          onClick={() => handleNavigation('/polls')}
-          style={{
-            margin: '10px',
-            padding: '10px 20px',
-            fontSize: '16px',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-          }}
-        >
+        <button onClick={() => handleNavigation('/polls')} style={buttonStyle('#007bff')}>
           Enter Polls
         </button>
 
-        <button
-          onClick={() => handleNavigation('/create-user')}
-          style={{
-            margin: '10px',
-            padding: '10px 20px',
-            fontSize: '16px',
-            backgroundColor: '#28a745',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-          }}
-        >
+        <button onClick={() => handleNavigation('/create-user')} style={buttonStyle('#28a745')}>
           Create User
         </button>
       </div>

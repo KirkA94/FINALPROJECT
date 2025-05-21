@@ -21,7 +21,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    // Check if there's a valid token and user info in localStorage
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
     if (token && storedUser) {
@@ -31,15 +30,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = (token: string, user: User) => {
-    localStorage.setItem('token', token); // Store the token
-    localStorage.setItem('user', JSON.stringify(user)); // Store user info
+    localStorage.setItem('token', token);
+    localStorage.setItem('user', JSON.stringify(user));
     setIsAuthenticated(true);
     setUser(user);
   };
 
   const logout = () => {
-    localStorage.removeItem('token'); // Remove the token
-    localStorage.removeItem('user'); // Remove user info
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUser(null);
   };

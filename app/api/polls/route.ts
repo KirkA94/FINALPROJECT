@@ -28,9 +28,7 @@ export async function GET() {
 // Create a new poll (POST method)
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-
-    const { question, options, userId } = body;
+    const { question, options, userId } = await req.json();
 
     // Validate input
     if (!question || typeof question !== "string" || question.trim().length === 0) {
@@ -55,9 +53,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Sanitize options to ensure they are all valid strings
-    const sanitizedOptions = options.filter((option: string) =>
-      typeof option === "string" && option.trim().length > 0
-    );
+    const sanitizedOptions = options
+      .filter((option: string) => typeof option === "string" && option.trim().length > 0)
+      .map((text: string) => ({ text: text.trim() }));
 
     if (sanitizedOptions.length === 0) {
       return NextResponse.json(
@@ -72,7 +70,7 @@ export async function POST(req: NextRequest) {
         question: question.trim(),
         userId,
         options: {
-          create: sanitizedOptions.map((text: string) => ({ text: text.trim() })),
+          create: sanitizedOptions,
         },
       },
       include: {
@@ -84,9 +82,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(poll, { status: 201 });
   } catch (error) {
     console.error("Error creating poll:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
-      { error: "Failed to create poll.", details: errorMessage },
+      { error: "Failed to create poll.", details: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }
