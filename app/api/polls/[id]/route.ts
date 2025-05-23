@@ -6,7 +6,7 @@ const JWT_ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET || "fallback
 
 export async function GET(req: NextRequest, context: { params: { id: string } }) {
   try {
-    const { id } = context.params; // Extract poll ID
+    const { id } = await context.params; // Await `context.params`
     const pollId = parseInt(id, 10); // Convert to integer
 
     // Validate poll ID

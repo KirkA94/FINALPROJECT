@@ -2,21 +2,41 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { isTokenExpired } from '@/lib/tokenUtils'; // Import the function
+import { isTokenExpired } from '@/lib/tokenUtils'; // Import token utility
 
+// Centralized function to get a valid token
+async function getValidToken() {
+  try {
+    let token = localStorage.getItem('token');
+
+    if (!token || isTokenExpired(token)) {
+      console.log("Token is expired or missing. Attempting to refresh...");
+      token = await refreshAccessToken();
+    }
+
+    if (!token) {
+      throw new Error("Unable to obtain a valid token. Please log in again.");
+    }
+
+    return token;
+  } catch (error) {
+    console.error("Error obtaining a valid token:", error);
+    localStorage.removeItem('token');
+    localStorage.removeItem('refreshToken');
+    window.location.href = '/login'; // Redirect to login
+    throw error;
+  }
+}
+
+// Function to refresh the access token
 async function refreshAccessToken() {
   try {
     const refreshToken = localStorage.getItem('refreshToken');
 
     if (!refreshToken) {
       console.error("Refresh token not found in localStorage");
-      localStorage.removeItem('token');
-      localStorage.removeItem('refreshToken');
-      window.location.href = '/login'; // Redirect to login
       throw new Error("Refresh token not found");
     }
-
-    console.log("Attempting to refresh access token with refreshToken:", refreshToken);
 
     const response = await fetch('/api/auth/refresh', {
       method: 'POST',
@@ -33,7 +53,6 @@ async function refreshAccessToken() {
     }
 
     const { accessToken } = await response.json();
-    console.log("New access token received:", accessToken);
     localStorage.setItem('token', accessToken);
     return accessToken;
   } catch (error) {
@@ -83,19 +102,14 @@ export default function CreatePollPage() {
     }
 
     try {
-      let token = localStorage.getItem('token');
-      console.log("Token before expiration check:", token);
+      const token = await getValidToken(); // Use centralized token management
 
-      // Check if token is expired and refresh if needed
-      if (token && isTokenExpired(token)) {
-        console.log("Token is expired. Attempting to refresh...");
-        token = await refreshAccessToken(); // Refresh the token
-      }
+      // Decode the token to extract the userId (assuming JWT contains the userId in its payload)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const userId = payload.userId;
 
-      if (!token) {
-        setMessage("You are not authenticated. Please log in.");
-        router.push('/login');
-        return;
+      if (!userId) {
+        throw new Error("User ID is missing from the token.");
       }
 
       const response = await fetch('/api/polls', {
@@ -104,7 +118,7 @@ export default function CreatePollPage() {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ question, options }),
+        body: JSON.stringify({ question, options, userId }), // Include userId in the request body
       });
 
       if (response.ok) {
@@ -123,7 +137,7 @@ export default function CreatePollPage() {
       }
     } catch (error) {
       console.error("Error creating poll:", error);
-      setMessage("An unexpected error occurred.");
+      setMessage("An unexpected error occurred. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

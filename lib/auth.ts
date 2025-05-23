@@ -1,6 +1,6 @@
-import jwt from 'jsonwebtoken';
+import jwt from "jsonwebtoken";
 
-const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || 'fallback-secret-key'; // Use environment variable for JWT signing
+const SECRET_KEY = process.env.SECRET_KEY || "your-secret-key"; // Use an environment variable for security
 
 /**
  * Generates a JWT for the given payload.
@@ -8,16 +8,7 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY || 'fallback-secret-key'; // U
  * @returns A signed JWT.
  */
 export function generateToken(payload: object) {
-  try {
-    return jwt.sign(payload, JWT_SECRET_KEY, { expiresIn: '1h' }); // Token expires in 1 hour
-  } catch (error) {
-    if (error instanceof Error) {
-      console.error('Error generating token:', error.message);
-    } else {
-      console.error('Unexpected error generating token:', error);
-    }
-    throw new Error('Failed to generate token');
-  }
+  return jwt.sign(payload, SECRET_KEY, { expiresIn: "1h" }); // Token expires in 1 hour
 }
 
 /**
@@ -27,15 +18,9 @@ export function generateToken(payload: object) {
  */
 export function verifyToken(token: string) {
   try {
-    return jwt.verify(token, JWT_SECRET_KEY);
+    return jwt.verify(token, SECRET_KEY);
   } catch (error) {
-    if (error instanceof jwt.TokenExpiredError) {
-      console.error('Token has expired:', error.message);
-    } else if (error instanceof jwt.JsonWebTokenError) {
-      console.error('Invalid token:', error.message);
-    } else {
-      console.error('Error verifying token:', error);
-    }
-    return null; // Return null for invalid or expired tokens
+    console.error("Invalid token:", error);
+    return null;
   }
 }

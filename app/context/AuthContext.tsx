@@ -1,7 +1,6 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { isTokenExpired } from '@/lib/tokenUtils';
 
 interface User {
   username: string;
@@ -11,7 +10,7 @@ interface User {
 interface AuthContextType {
   isAuthenticated: boolean;
   user: User | null;
-  login: (token: string, user: User, refreshToken: string) => void;
+  login: (token: string, user: User) => void;
   logout: () => void;
 }
 
@@ -21,47 +20,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState<User | null>(null);
 
-  // Automatically refresh the token or log out the user
   useEffect(() => {
     const token = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
-    const refreshToken = localStorage.getItem('refreshToken');
-
-    if (token && storedUser && !isTokenExpired(token)) {
+    if (token && storedUser) {
       setIsAuthenticated(true);
       setUser(JSON.parse(storedUser));
-    } else if (refreshToken) {
-      // Attempt to refresh the token if it exists
-      refreshAccessToken(refreshToken);
-    } else {
-      logout();
     }
   }, []);
 
-  const refreshAccessToken = async (refreshToken: string) => {
-    try {
-      const response = await fetch('/api/auth/refresh', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ refreshToken }),
-      });
-
-      if (response.ok) {
-        const { accessToken, user } = await response.json();
-        login(accessToken, user, refreshToken);
-      } else {
-        console.error('Failed to refresh access token.');
-        logout();
-      }
-    } catch (error) {
-      console.error('Error refreshing access token:', error);
-      logout();
-    }
-  };
-
-  const login = (token: string, user: User, refreshToken: string) => {
+  const login = (token: string, user: User) => {
     localStorage.setItem('token', token);
-    localStorage.setItem('refreshToken', refreshToken);
     localStorage.setItem('user', JSON.stringify(user));
     setIsAuthenticated(true);
     setUser(user);
@@ -69,7 +38,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const logout = () => {
     localStorage.removeItem('token');
-    localStorage.removeItem('refreshToken');
     localStorage.removeItem('user');
     setIsAuthenticated(false);
     setUser(null);

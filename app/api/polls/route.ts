@@ -1,46 +1,29 @@
 import { prisma } from "@/lib/prisma";
 import { NextRequest, NextResponse } from "next/server";
-import { verifyToken } from "@/lib/auth"; // Import the function to verify tokens
 
 // Create a new poll (POST method)
 export async function POST(req: NextRequest) {
   try {
-    // Extract and verify the token from the Authorization header
-    const authHeader = req.headers.get("Authorization");
-    const token = authHeader?.replace("Bearer ", "");
-    if (!token) {
-      console.error("Unauthorized request: Missing token");
-      return NextResponse.json(
-        { error: "Unauthorized. Missing token." },
-        { status: 401 }
-      );
-    }
+    const { question, options, userId } = await req.json();
 
-    const user = verifyToken(token);
-    if (!user || typeof user !== "object" || !("id" in user)) {
-      console.error("Unauthorized request: Invalid or expired token", token);
-      return NextResponse.json(
-        { error: "Unauthorized. Invalid or expired token." },
-        { status: 401 }
-      );
-    }
-
-    // Parse and validate the request body
-    const body = await req.json();
-    const { question, options } = body;
-
+    // Validate input
     if (!question || typeof question !== "string" || question.trim().length === 0) {
-      console.error("Invalid request: Missing or invalid 'question' field");
       return NextResponse.json(
         { error: "Invalid or missing 'question' field." },
         { status: 400 }
       );
     }
 
-    if (!options || !Array.isArray(options) || options.length < 2) {
-      console.error("Invalid request: At least two valid options are required");
+    if (!options || !Array.isArray(options) || options.length === 0) {
       return NextResponse.json(
-        { error: "At least two valid options are required." },
+        { error: "At least one valid option is required." },
+        { status: 400 }
+      );
+    }
+
+    if (!userId || typeof userId !== "number") {
+      return NextResponse.json(
+        { error: "Invalid or missing 'userId' field." },
         { status: 400 }
       );
     }
@@ -50,10 +33,9 @@ export async function POST(req: NextRequest) {
       .filter((option: string) => typeof option === "string" && option.trim().length > 0)
       .map((text: string) => ({ text: text.trim() }));
 
-    if (sanitizedOptions.length < 2) {
-      console.error("Invalid request: Options sanitization resulted in less than two valid options");
+    if (sanitizedOptions.length === 0) {
       return NextResponse.json(
-        { error: "At least two valid options are required after sanitization." },
+        { error: "At least one valid option is required after sanitization." },
         { status: 400 }
       );
     }
@@ -62,7 +44,7 @@ export async function POST(req: NextRequest) {
     const poll = await prisma.poll.create({
       data: {
         question: question.trim(),
-        userId: user.id, // Use the authenticated user's ID
+        userId,
         options: {
           create: sanitizedOptions,
         },
@@ -73,7 +55,6 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    console.log("Poll created successfully:", poll);
     return NextResponse.json(poll, { status: 201 });
   } catch (error) {
     console.error("Error creating poll:", error);
@@ -84,19 +65,19 @@ export async function POST(req: NextRequest) {
   }
 }
 
-// Optional: Add a GET route to fetch all polls if required
+// Fetch all polls (GET method)
 export async function GET() {
   try {
     const polls = await prisma.poll.findMany({
+      orderBy: {
+        createdAt: "desc", // Fetch the most recent polls first
+      },
       include: {
-        options: {
-          include: { votes: true }, // Include votes for each option
-        },
-        user: true, // Include the user who created the poll
+        options: true,
+        user: true,
       },
     });
 
-    console.log("Fetched polls successfully:", polls);
     return NextResponse.json(polls, { status: 200 });
   } catch (error) {
     console.error("Error fetching polls:", error);

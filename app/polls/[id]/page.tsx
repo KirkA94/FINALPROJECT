@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 
 type Poll = {
   id: number;
@@ -10,13 +10,15 @@ type Poll = {
   user: { username: string };
 };
 
-export default function PollPage({ params }: { params: { id: string } }) {
+export default function PollPage() {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const params = useParams(); // Use useParams to get dynamic route params
 
-  const pollId = parseInt(params.id, 10); // Parse `id` to integer
+  // Ensure `params.id` is safely handled
+  const pollId = Array.isArray(params?.id) ? parseInt(params.id[0], 10) : parseInt(params?.id || '', 10);
 
   const fetchPoll = useCallback(async () => {
     try {

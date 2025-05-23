@@ -22,7 +22,12 @@ export default function Home() {
       setError('');
       try {
         // Use a relative API path since the API is hosted on the same domain
-        const response = await fetch('/api/polls');
+        const token = localStorage.getItem('token'); // Ensure token is included for authenticated requests
+        const response = await fetch('/api/polls', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
         if (!response.ok) {
           throw new Error('Failed to fetch recent polls. Please try again later.');
         }
