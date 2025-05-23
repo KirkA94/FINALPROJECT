@@ -3,51 +3,40 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 
-const SECRET_KEY = process.env.SECRET_KEY || "your_secret_key";
+const JWT_ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET;
+const JWT_REFRESH_TOKEN_SECRET = process.env.JWT_REFRESH_TOKEN_SECRET;
+
+function generateAccessToken(payload: object): string {
+  return jwt.sign(payload, JWT_ACCESS_TOKEN_SECRET as string, { expiresIn: "1h" });
+}
+
+function generateRefreshToken(payload: object): string {
+  return jwt.sign(payload, JWT_REFRESH_TOKEN_SECRET as string, { expiresIn: "7d" });
+}
 
 export async function POST(req: NextRequest) {
   try {
     const { username, password } = await req.json();
 
-    // Validate input
-    if (!username || !password) {
-      return NextResponse.json(
-        { error: "Username and password are required." },
-        { status: 400 }
-      );
-    }
-
-    // Find the user in the database
     const user = await prisma.user.findUnique({
       where: { username },
     });
 
-    if (!user) {
-      return NextResponse.json(
-        { error: "Invalid username or password." },
-        { status: 401 }
-      );
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
+      return NextResponse.json({ error: "Invalid username or password" }, { status: 401 });
     }
 
-    // Compare the password
-    const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
-    if (!isPasswordValid) {
-      return NextResponse.json(
-        { error: "Invalid username or password." },
-        { status: 401 }
-      );
-    }
+    const accessToken = generateAccessToken({ userId: user.id, username: user.username });
+    const refreshToken = generateRefreshToken({ userId: user.id });
 
-    // Generate JWT token
-    const token = jwt.sign(
-      { userId: user.id, username: user.username },
-      SECRET_KEY,
-      { expiresIn: "1h" }
-    );
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { refreshToken },
+    });
 
     return NextResponse.json({
-      message: "Sign-in successful.",
-      token,
+      accessToken,
+      refreshToken,
       user: {
         id: user.id,
         username: user.username,
@@ -55,10 +44,6 @@ export async function POST(req: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Error during sign-in:", error);
-    return NextResponse.json(
-      { error: "An unexpected error occurred." },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to sign in" }, { status: 500 });
   }
 }

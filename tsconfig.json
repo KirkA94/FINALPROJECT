@@ -1,33 +1,42 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
-    "module": "esnext",
-    "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
+    "target": "ES2020", // Updated to ES2020 for broader modern syntax support
+    "lib": ["dom", "dom.iterable", "esnext"], // No change; supports DOM and ESNext features
+    "allowJs": true, // Allows JavaScript files in the project
+    "skipLibCheck": true, // Skips type checking of declaration files for faster builds
+    "strict": true, // Enables strict type checking
+    "noEmit": true, // Ensures no files are emitted; suitable for Next.js
+    "esModuleInterop": true, // Ensures compatibility with CommonJS modules
+    "module": "esnext", // Keeps the module system as ESNext
+    "moduleResolution": "bundler", // Optimized for modern bundlers
+    "resolveJsonModule": true, // Allows importing JSON files
+    "isolatedModules": true, // Ensures each file is treated as an isolated module
+    "jsx": "preserve", // Keeps JSX as-is for Next.js to handle
+    "incremental": true, // Speeds up subsequent builds by using incremental compilation
     "plugins": [
       {
-        "name": "next"
+        "name": "next" // Includes Next.js-specific TypeScript features
       }
     ],
     "paths": {
-      "@/*": ["./*"]
-    }
+      "@/*": ["./*"] // Supports absolute imports using "@"
+    },
+    "types": ["node", "jest"], // Added common global type declarations for Node.js and Jest
+    "baseUrl": ".", // Sets the base directory for resolving non-relative imports
+    "forceConsistentCasingInFileNames": true, // Ensures consistent casing in file imports
+    "strictNullChecks": true, // Ensures better null safety checks
+    "allowSyntheticDefaultImports": true // Allows default imports even if not explicitly set in the module
   },
   "include": [
-    "next-env.d.ts",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts",
-    "types/formidable.d.ts" // Added the custom type declaration file
+    "next-env.d.ts", // Includes Next.js environment types
+    "**/*.ts", // Includes all TypeScript files
+    "**/*.tsx", // Includes all TSX files for React components
+    ".next/types/**/*.ts", // Includes Next.js types
+    "types/formidable.d.ts" // Custom type declaration file
   ],
-  "exclude": ["node_modules"]
+  "exclude": [
+    "node_modules", // Excludes `node_modules` for better performance
+    ".next", // Excludes `.next` build artifacts
+    "out" // Excludes any `out` directory if using `next export`
+  ]
 }

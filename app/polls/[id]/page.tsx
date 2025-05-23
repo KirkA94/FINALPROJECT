@@ -10,43 +10,63 @@ type Poll = {
   user: { username: string };
 };
 
-export default function PollPage({ params }: { params: Promise<{ id: string }> }) {
+export default function PollPage({ params }: { params: { id: string } }) {
   const [poll, setPoll] = useState<Poll | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const pollId = parseInt(params.id, 10); // Parse `id` to integer
+
   const fetchPoll = useCallback(async () => {
     try {
-      const resolvedParams = await params; // Await the params promise
-      const pollId = Number(resolvedParams.id);
-
       if (isNaN(pollId)) {
-        throw new Error('Invalid poll ID.');
+        setError('Invalid poll ID.');
+        return;
       }
 
       // Fetch the poll data
       const response = await fetch(`/api/polls/${pollId}`);
       if (!response.ok) {
-        throw new Error('Failed to fetch poll.');
+        if (response.status === 404) {
+          setError('Poll not found.');
+        } else {
+          setError('Failed to fetch poll.');
+        }
+        return;
       }
 
       const data = await response.json();
       setPoll(data);
     } catch (err) {
       console.error('Error fetching poll:', err);
-      setError('Failed to load poll. Please try again later.');
+      setError('An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
-  }, [params]);
+  }, [pollId]);
 
   useEffect(() => {
     fetchPoll();
   }, [fetchPoll]);
 
   if (loading) return <p>Loading poll...</p>;
-  if (error) return <p style={{ color: 'red' }}>{error}</p>;
+
+  if (error)
+    return (
+      <div style={{ color: 'red', padding: '20px' }}>
+        <p>{error}</p>
+        <button
+          onClick={() => {
+            setError(null); // Reset error state
+            router.push('/'); // Navigate back to home
+          }}
+          style={backButtonStyle}
+        >
+          Go Back to Home
+        </button>
+      </div>
+    );
 
   if (!poll) return <p>Poll not found.</p>;
 
@@ -65,3 +85,16 @@ export default function PollPage({ params }: { params: Promise<{ id: string }> }
     </div>
   );
 }
+
+// Inline style for the back button
+const backButtonStyle = {
+  padding: '10px 20px',
+  backgroundColor: '#007bff',
+  color: 'white',
+  border: 'none',
+  borderRadius: '5px',
+  cursor: 'pointer',
+  fontSize: '16px',
+  marginTop: '10px',
+  transition: 'background-color 0.3s ease',
+};

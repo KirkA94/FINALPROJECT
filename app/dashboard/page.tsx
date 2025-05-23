@@ -16,8 +16,11 @@ export default function Dashboard() {
   }, [isAuthenticated, router]);
 
   const handleLogout = () => {
-    logout(); // Log the user out
-    router.push('/'); // Redirect to the home page after logout
+    const confirmLogout = window.confirm('Are you sure you want to log out?');
+    if (confirmLogout) {
+      logout(); // Log the user out
+      router.push('/'); // Redirect to the home page after logout
+    }
   };
 
   if (!isAuthenticated) {
@@ -34,36 +37,43 @@ export default function Dashboard() {
       <p>You are successfully logged in. Manage your polls below.</p>
       <div style={{ marginTop: '30px' }}>
         <h2>Manage Your Polls</h2>
-        <button
+        <Button
+          label="View Polls"
           onClick={() => router.push('/polls')}
-          style={buttonStyle('#007bff')}
-        >
-          View Polls
-        </button>
-        <button
+          bgColor="#007bff"
+        />
+        <Button
+          label="Create New Poll"
           onClick={() => router.push('/polls/create')}
-          style={buttonStyle('#28a745')}
-        >
-          Create New Poll
-        </button>
+          bgColor="#28a745"
+        />
       </div>
       <div style={{ marginTop: '30px' }}>
-        <button onClick={handleLogout} style={buttonStyle('#dc3545')}>
-          Logout
-        </button>
+        <Button label="Logout" onClick={handleLogout} bgColor="#dc3545" />
       </div>
     </div>
   );
 }
 
-// Reusable button styles
-const buttonStyle = (bgColor: string) => ({
-  margin: '10px',
-  padding: '10px 20px',
-  fontSize: '16px',
-  backgroundColor: bgColor,
-  color: 'white',
-  border: 'none',
-  borderRadius: '5px',
-  cursor: 'pointer',
-});
+// Reusable Button Component
+const Button: React.FC<{ label: string; onClick: () => void; bgColor: string }> = ({
+  label,
+  onClick,
+  bgColor,
+}) => (
+  <button
+    onClick={onClick}
+    style={{
+      margin: '10px',
+      padding: '10px 20px',
+      fontSize: '16px',
+      backgroundColor: bgColor,
+      color: 'white',
+      border: 'none',
+      borderRadius: '5px',
+      cursor: 'pointer',
+    }}
+  >
+    {label}
+  </button>
+);

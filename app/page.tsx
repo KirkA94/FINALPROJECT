@@ -21,17 +21,16 @@ export default function Home() {
       setLoading(true);
       setError('');
       try {
+        // Use a relative API path since the API is hosted on the same domain
         const response = await fetch('/api/polls');
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('API Error:', errorText);
-          throw new Error('Failed to fetch recent polls.');
+          throw new Error('Failed to fetch recent polls. Please try again later.');
         }
+
         const data = await response.json();
 
         // Validate the API response
         if (!Array.isArray(data) || !data.every((poll) => typeof poll.id === 'number' && typeof poll.question === 'string')) {
-          console.error('Unexpected response format:', data);
           throw new Error('Unexpected response format from the server.');
         }
 
@@ -52,17 +51,6 @@ export default function Home() {
     router.push(path);
   };
 
-  const buttonStyle = (bgColor: string) => ({
-    margin: '10px',
-    padding: '10px 20px',
-    fontSize: '16px',
-    backgroundColor: bgColor,
-    color: 'white',
-    border: 'none',
-    borderRadius: '5px',
-    cursor: 'pointer',
-  });
-
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
       <h1>MyPolls</h1>
@@ -70,13 +58,8 @@ export default function Home() {
       <p>Welcome to MyPolls, where you can create and participate in exciting polls!</p>
 
       <div style={{ margin: '20px 0' }}>
-        <button onClick={() => handleNavigation('/polls')} style={buttonStyle('#007bff')}>
-          Enter Polls
-        </button>
-
-        <button onClick={() => handleNavigation('/create-user')} style={buttonStyle('#28a745')}>
-          Create User
-        </button>
+        <Button label="Enter Polls" onClick={() => handleNavigation('/polls')} bgColor="#007bff" />
+        <Button label="Create User" onClick={() => handleNavigation('/create-user')} bgColor="#28a745" />
       </div>
 
       <AuthButtons />
@@ -92,15 +75,7 @@ export default function Home() {
             {recentPolls.map((poll) => (
               <li
                 key={poll.id}
-                style={{
-                  margin: '10px 0',
-                  padding: '10px',
-                  border: '1px solid #ccc',
-                  borderRadius: '5px',
-                  cursor: 'pointer',
-                  backgroundColor: '#f9f9f9',
-                  transition: 'background-color 0.3s',
-                }}
+                style={pollItemStyle}
                 onClick={() => handleNavigation(`/polls/${poll.id}`)}
                 onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = '#f1f1f1')}
                 onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = '#f9f9f9')}
@@ -110,9 +85,39 @@ export default function Home() {
             ))}
           </ul>
         ) : (
-          <p>No recent polls available.</p>
+          <p>No recent polls available. <a onClick={() => handleNavigation('/polls/create')} style={{ color: '#007bff', cursor: 'pointer' }}>Create one now!</a></p>
         )}
       </div>
     </div>
   );
 }
+
+// Reusable Button Component
+const Button: React.FC<{ label: string; onClick: () => void; bgColor: string }> = ({ label, onClick, bgColor }) => (
+  <button
+    onClick={onClick}
+    style={{
+      margin: '10px',
+      padding: '10px 20px',
+      fontSize: '16px',
+      backgroundColor: bgColor,
+      color: 'white',
+      border: 'none',
+      borderRadius: '5px',
+      cursor: 'pointer',
+    }}
+  >
+    {label}
+  </button>
+);
+
+// Poll Item Style
+const pollItemStyle = {
+  margin: '10px 0',
+  padding: '10px',
+  border: '1px solid #ccc',
+  borderRadius: '5px',
+  cursor: 'pointer',
+  backgroundColor: '#f9f9f9',
+  transition: 'background-color 0.3s',
+};

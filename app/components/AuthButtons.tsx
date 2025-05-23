@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { useAuth } from '../context/AuthContext'; // Adjust the path to your AuthContext
+import { useAuth } from '../context/AuthContext';
 import { useRouter } from 'next/navigation';
 
 export default function AuthButtons() {
@@ -18,37 +18,31 @@ export default function AuthButtons() {
     }
 
     try {
-      const response = await fetch('/api/users/signin', {
+      const response = await fetch('/api/users/sign-in', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
       if (response.ok) {
-        const data = await response.json();
-        if (data.token && data.user) {
-          login(data.token, data.user); // Log the user in
-          alert('Login successful!');
-          router.push('/dashboard'); // Redirect to dashboard
-        } else {
-          console.error('Unexpected response format:', data);
-          alert('Unexpected response format from the server. Please contact support.');
-        }
+        const { accessToken, refreshToken, user } = await response.json();
+        login(accessToken, user, refreshToken);
+        alert('Login successful!');
+        router.push('/dashboard');
       } else {
         const errorData = await response.json();
-        console.error('Login failed:', errorData);
         alert(`Login failed: ${errorData.error || 'Unknown error'}`);
       }
     } catch (error) {
       console.error('Login error:', error);
-      alert('An error occurred while trying to login. Please try again later.');
+      alert('An error occurred while trying to log in. Please try again later.');
     }
   };
 
   const handleLogout = () => {
-    logout(); // Log the user out
+    logout();
     alert('You have logged out.');
-    router.push('/'); // Redirect to home
+    router.push('/');
   };
 
   return (

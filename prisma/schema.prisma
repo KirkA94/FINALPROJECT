@@ -12,6 +12,7 @@ model User {
   username     String   @unique
   passwordHash String
   profileImage String?  // Optional profile image
+  refreshToken String?  // Optional field to store the refresh token
   polls        Poll[]   @relation("UserPolls") // Relation to polls created by the user
   votes        Vote[]   // Relation to votes cast by the user
   createdAt    DateTime @default(now()) // Timestamp for when the user was created

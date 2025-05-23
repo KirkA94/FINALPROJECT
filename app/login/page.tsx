@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/app/context/AuthContext'; // Adjusted path to match your app structure
+import { useAuth } from '@/app/context/AuthContext';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -10,12 +10,19 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const { login } = useAuth(); // Use the login function from AuthContext
+  const { login } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null); // Clear previous errors
+    setError(null);
     setLoading(true);
+
+    // Client-side validation
+    if (!username || !password) {
+      setError('Both username and password are required.');
+      setLoading(false);
+      return;
+    }
 
     try {
       const response = await fetch('/api/users/sign-in', {
@@ -33,13 +40,13 @@ export default function LoginPage() {
 
       const data = await response.json();
 
-      // Log in the user using the AuthContext
-      login(data.token, {
+      // Log in the user using AuthContext
+      login(data.accessToken, {
         username: data.user.username,
         profileImage: data.user.profileImage,
-      });
+      }, data.refreshToken);
 
-      // Redirect the user to the dashboard or polls page
+      // Redirect to polls or dashboard
       router.push('/polls');
     } catch (err: any) {
       console.error('Error during sign-in:', err);
@@ -58,6 +65,7 @@ export default function LoginPage() {
           <input
             type="text"
             id="username"
+            aria-label="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
@@ -69,6 +77,7 @@ export default function LoginPage() {
           <input
             type="password"
             id="password"
+            aria-label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
@@ -81,16 +90,17 @@ export default function LoginPage() {
           style={{
             width: '100%',
             padding: '10px',
-            backgroundColor: loading ? '#ccc' : '#007bff',
+            backgroundColor: loading ? '#5a5a5a' : '#007bff',
             color: 'white',
             border: 'none',
             borderRadius: '4px',
             cursor: loading ? 'not-allowed' : 'pointer',
             fontSize: '16px',
+            opacity: loading ? 0.8 : 1,
           }}
           disabled={loading}
         >
-          {loading ? 'Signing in...' : 'Sign In'}
+          {loading ? 'Authenticating...' : 'Sign In'}
         </button>
       </form>
     </div>

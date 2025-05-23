@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useAuth } from '@/app/context/AuthContext'; // Adjust the path as needed
 import { useRouter } from 'next/navigation';
+import styled from 'styled-components';
 
 export default function Header() {
   const { isAuthenticated, logout, user } = useAuth(); // Access authentication state and user info
@@ -10,91 +11,123 @@ export default function Header() {
 
   const handleLogout = () => {
     logout(); // Log the user out
+    localStorage.removeItem("token"); // Clear the token from local storage
     router.push('/'); // Redirect to the home page after logout
   };
 
   return (
-    <header style={headerStyle}>
-      <div style={logoStyle}>
-        <Link href="/" style={{ textDecoration: 'none', color: '#007bff' }}>
-          <h1>MyPolls</h1>
+    <HeaderContainer>
+      <LogoContainer>
+        <Link href="/">
+          <LogoLink>
+            <LogoImage src="/logo.png" alt="MyPolls Logo" />
+            <SiteName>MyPolls</SiteName>
+          </LogoLink>
         </Link>
-      </div>
-      <nav>
-        <ul style={navListStyle}>
-          <li style={navItemStyle}>
-            <Link href="/" style={linkStyle}>
-              Home
-            </Link>
-          </li>
-          <li style={navItemStyle}>
-            <Link href="/polls" style={linkStyle}>
-              Polls
-            </Link>
-          </li>
+      </LogoContainer>
+      <Nav>
+        <NavList>
+          <NavItem>
+            <Link href="/">Home</Link>
+          </NavItem>
+          <NavItem>
+            <Link href="/polls">Polls</Link>
+          </NavItem>
           {isAuthenticated && (
             <>
-              <li style={navItemStyle}>
-                <Link href="/dashboard" style={linkStyle}>
-                  Dashboard
-                </Link>
-              </li>
-              <li style={navItemStyle}>
-                <button onClick={handleLogout} style={logoutButtonStyle}>
-                  Logout
-                </button>
-              </li>
+              <NavItem>
+                <Link href="/dashboard">Dashboard</Link>
+              </NavItem>
+              <NavItem>
+                <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
+              </NavItem>
             </>
           )}
           {!isAuthenticated && (
-            <li style={navItemStyle}>
-              <Link href="/login" style={linkStyle}>
-                Login
-              </Link>
-            </li>
+            <NavItem>
+              <Link href="/login">Login</Link>
+            </NavItem>
           )}
-        </ul>
-      </nav>
-    </header>
+        </NavList>
+      </Nav>
+    </HeaderContainer>
   );
 }
 
-// Styles
-const headerStyle = {
-  display: 'flex',
-  justifyContent: 'space-between',
-  alignItems: 'center',
-  padding: '10px 20px',
-  backgroundColor: '#f8f9fa',
-  borderBottom: '1px solid #ddd',
-};
+// Styled Components
+const HeaderContainer = styled.header`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 30px;
+  background-color: #ffffff;
+  border-bottom: 1px solid #ddd;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+`;
 
-const logoStyle = {
-  fontSize: '24px',
-  fontWeight: 'bold',
-};
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
 
-const navListStyle = {
-  listStyle: 'none',
-  display: 'flex',
-  margin: 0,
-  padding: 0,
-};
+const LogoLink = styled.div`
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  color: #007bff;
+`;
 
-const navItemStyle = {
-  marginLeft: '15px',
-};
+const LogoImage = styled.img`
+  height: 40px;
+  margin-right: 10px;
+`;
 
-const linkStyle = {
-  textDecoration: 'none',
-  color: '#007bff',
-};
+const SiteName = styled.span`
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+`;
 
-const logoutButtonStyle = {
-  padding: '5px 10px',
-  backgroundColor: '#dc3545',
-  color: 'white',
-  border: 'none',
-  borderRadius: '5px',
-  cursor: 'pointer',
-};
+const Nav = styled.nav``;
+
+const NavList = styled.ul`
+  list-style: none;
+  display: flex;
+  margin: 0;
+  padding: 0;
+`;
+
+const NavItem = styled.li`
+  margin-left: 20px;
+
+  a {
+    text-decoration: none;
+    color: #007bff;
+    font-size: 16px;
+    font-weight: 500;
+    transition: color 0.3s ease;
+
+    &:hover {
+      color: #0056b3;
+    }
+  }
+`;
+
+const LogoutButton = styled.button`
+  padding: 8px 15px;
+  background-color: #dc3545;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+
+  &:hover {
+    background-color: #b02a37;
+  }
+
+  &:active {
+    transform: scale(0.96);
+  }
+`;
