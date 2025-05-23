@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# MyPolls
 
-## Getting Started
+MyPolls is a full-stack web application designed to simplify the process of creating and participating in polls. This project was developed as part of a full-stack web development course and showcases skills in frontend and backend development, API integration, and database management.
 
-First, run the development server:
+## Features
+- **User Authentication**: Secure sign-in and session management using JWT.
+- **Poll Creation**: Users can create polls with multiple options and post them to a dashboard.
+- **Voting**: Authenticated users can vote on polls and see real-time updates.
+- **Dashboard**: View a list of recent polls and their results.
+- **Error Handling**: Displays user-friendly error messages for various scenarios.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Technology Stack
+- **Frontend**: [Next.js](https://nextjs.org), TypeScript, CSS
+- **Backend**: Next.js API Routes, Prisma ORM
+- **Database**: PostgreSQL
+- **Authentication**: JSON Web Tokens (JWT)
+- **Deployment**: [Vercel](https://vercel.com)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Installation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/KirkA94/FINALPROJECT.git
+   cd FINALPROJECT
+   ```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. Set up environment variables:
+   - Create a `.env` file in the root directory and add the following:
+     ```
+     DATABASE_URL=your_postgresql_database_url
+     JWT_ACCESS_TOKEN_SECRET=your_jwt_secret
+     ```
 
-## Learn More
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+5. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## API Endpoints
+1. **User Management**:
+   - **POST /api/users**: Create a new user.
+   - **GET /api/users/:id**: Fetch user details.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+2. **Polls**:
+   - **POST /api/polls**: Create a new poll.
+   - **GET /api/polls**: Fetch all polls.
+   - **POST /api/polls/:id/vote**: Submit a vote for a poll.
 
-## Deploy on Vercel
+3. **Authentication**:
+   - **POST /api/auth/refresh**: Refresh the access token.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
+The app is fully optimized for deployment on Vercel. Ensure all environment variables are set up in the Vercel dashboard.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## License
+This project is licensed under the MIT License. See the LICENSE file for details.
+
+## About the Developer
+This project was developed by Kirk Austin as a final assignment for a full-stack web development course. It reflects best practices in modern web development and aims to deliver a smooth and engaging user experience.
