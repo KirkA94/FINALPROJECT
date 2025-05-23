@@ -6,69 +6,42 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
     const { id } = context.params;
     const pollId = parseInt(id, 10);
 
-    // Validate poll ID
     if (isNaN(pollId) || pollId <= 0) {
-      return NextResponse.json(
-        { error: "Invalid poll ID. Must be a positive integer." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid poll ID. Must be a positive integer." }, { status: 400 });
     }
 
-    // Parse the request body
     const { optionId, userId, choice } = await req.json();
 
-    // Validate the request body
     if (!optionId || !userId || typeof choice === "undefined") {
-      return NextResponse.json(
-        { error: "Missing required fields: optionId, userId, or choice." },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Missing required fields: optionId, userId, or choice." }, { status: 400 });
     }
 
-    // Fetch the poll and validate the option
     const poll = await prisma.poll.findUnique({
       where: { id: pollId },
       include: { options: true },
     });
 
     if (!poll) {
-      return NextResponse.json(
-        { error: "Poll not found. Please check the poll ID." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Poll not found. Please check the poll ID." }, { status: 404 });
     }
 
     const optionExists = poll.options.some((option) => option.id === optionId);
     if (!optionExists) {
-      return NextResponse.json(
-        { error: "Option not found or does not belong to the specified poll." },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Option not found or does not belong to the specified poll." }, { status: 404 });
     }
 
-    // Check if the user has already voted in this poll
     const existingVote = await prisma.vote.findFirst({
       where: { userId, pollId },
     });
 
     if (existingVote) {
-      return NextResponse.json(
-        { error: "User has already voted in this poll." },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "User has already voted in this poll." }, { status: 403 });
     }
 
-    // Record the vote
-    const vote = await prisma.vote.create({
-      data: {
-        pollId,
-        optionId,
-        userId,
-        choice,
-      },
+    await prisma.vote.create({
+      data: { pollId, optionId, userId, choice },
     });
 
-    // Fetch the updated poll with votes and associated user data
     const updatedPoll = await prisma.poll.findUnique({
       where: { id: pollId },
       include: {
@@ -76,29 +49,18 @@ export async function POST(req: NextRequest, context: { params: { id: string } }
           include: {
             votes: {
               include: {
-                user: {
-                  select: { id: true, username: true },
-                },
+                user: { select: { id: true, username: true } },
               },
             },
           },
         },
-        user: {
-          select: { id: true, username: true },
-        },
+        user: { select: { id: true, username: true } },
       },
     });
 
     return NextResponse.json(updatedPoll, { status: 201 });
   } catch (error) {
     console.error("Error recording vote:", error);
-
-    return NextResponse.json(
-      {
-        error: "Failed to record vote",
-        details: error instanceof Error ? error.message : "Unknown error",
-      },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to record vote" }, { status: 500 });
   }
 }

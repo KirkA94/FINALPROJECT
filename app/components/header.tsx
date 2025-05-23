@@ -1,18 +1,18 @@
 'use client';
 
 import Link from 'next/link';
-import { useAuth } from '@/app/context/AuthContext'; // Adjust the path as needed
+import { useAuth } from '@/app/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import styled from 'styled-components';
 
 export default function Header() {
-  const { isAuthenticated, logout, user } = useAuth(); // Access authentication state and user info
+  const { isAuthenticated, logout } = useAuth(); // Removed unused `user`
   const router = useRouter();
 
   const handleLogout = () => {
-    logout(); // Log the user out
-    localStorage.removeItem("token"); // Clear the token from local storage
-    router.push('/'); // Redirect to the home page after logout
+    logout();
+    localStorage.removeItem("token");
+    router.push('/');
   };
 
   return (
@@ -55,79 +55,12 @@ export default function Header() {
 }
 
 // Styled Components
-const HeaderContainer = styled.header`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 15px 30px;
-  background-color: #ffffff;
-  border-bottom: 1px solid #ddd;
-  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-`;
-
-const LogoContainer = styled.div`
-  display: flex;
-  align-items: center;
-`;
-
-const LogoLink = styled.div`
-  display: flex;
-  align-items: center;
-  text-decoration: none;
-  color: #007bff;
-`;
-
-const LogoImage = styled.img`
-  height: 40px;
-  margin-right: 10px;
-`;
-
-const SiteName = styled.span`
-  font-size: 24px;
-  font-weight: bold;
-  color: #333;
-`;
-
+const HeaderContainer = styled.header``;
+const LogoContainer = styled.div``;
+const LogoLink = styled.div``;
+const LogoImage = styled.img``;
+const SiteName = styled.span``;
 const Nav = styled.nav``;
-
-const NavList = styled.ul`
-  list-style: none;
-  display: flex;
-  margin: 0;
-  padding: 0;
-`;
-
-const NavItem = styled.li`
-  margin-left: 20px;
-
-  a {
-    text-decoration: none;
-    color: #007bff;
-    font-size: 16px;
-    font-weight: 500;
-    transition: color 0.3s ease;
-
-    &:hover {
-      color: #0056b3;
-    }
-  }
-`;
-
-const LogoutButton = styled.button`
-  padding: 8px 15px;
-  background-color: #dc3545;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.2s ease;
-
-  &:hover {
-    background-color: #b02a37;
-  }
-
-  &:active {
-    transform: scale(0.96);
-  }
-`;
+const NavList = styled.ul``;
+const NavItem = styled.li``;
+const LogoutButton = styled.button``;

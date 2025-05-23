@@ -6,34 +6,25 @@ const JWT_ACCESS_TOKEN_SECRET = process.env.JWT_ACCESS_TOKEN_SECRET || "fallback
 
 export async function GET(req: NextRequest, context: { params: { id: string } }) {
   try {
-    const { id } = await context.params; // Await `context.params`
-    const pollId = parseInt(id, 10); // Convert to integer
+    const { id } = context.params;
+    const pollId = parseInt(id, 10);
 
-    // Validate poll ID
     if (isNaN(pollId)) {
       return NextResponse.json({ error: "Invalid poll ID." }, { status: 400 });
     }
 
-    // Authentication check
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json({ error: "Unauthorized access." }, { status: 401 });
     }
 
     const token = authHeader.split(" ")[1];
-    try {
-      jwt.verify(token, JWT_ACCESS_TOKEN_SECRET); // Verify token
-    } catch (error) {
-      return NextResponse.json({ error: "Invalid or expired token." }, { status: 401 });
-    }
+    jwt.verify(token, JWT_ACCESS_TOKEN_SECRET);
 
-    // Fetch the poll from the database
     const poll = await prisma.poll.findUnique({
       where: { id: pollId },
       include: {
-        options: {
-          include: { votes: true },
-        },
+        options: { include: { votes: true } },
         user: true,
       },
     });
@@ -42,10 +33,8 @@ export async function GET(req: NextRequest, context: { params: { id: string } })
       return NextResponse.json({ error: `Poll with ID ${pollId} not found.` }, { status: 404 });
     }
 
-    // Return the poll data
     return NextResponse.json(poll, { status: 200 });
-  } catch (error) {
-    console.error("Error fetching poll:", error);
+  } catch {
     return NextResponse.json({ error: "Failed to fetch poll." }, { status: 500 });
   }
 }

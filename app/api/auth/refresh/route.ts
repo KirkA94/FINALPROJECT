@@ -34,7 +34,7 @@ export async function POST(req: Request) {
     const newAccessToken = generateAccessToken({ userId: user.id, username: user.username });
 
     return NextResponse.json({ accessToken: newAccessToken }, { status: 200 });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to refresh token" }, { status: 500 });
   }
 }

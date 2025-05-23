@@ -26,7 +26,7 @@ export default async function UserProfile({ params }: { params: Promise<{ id: st
 
     return (
       <div style={{ padding: '20px', maxWidth: '600px', margin: '0 auto' }}>
-        <h1 style={{ textAlign: 'center' }}>{user.username}'s Profile</h1>
+        <h1 style={{ textAlign: 'center' }}>{user.username}&apos;s Profile</h1>
         <div style={{ textAlign: 'center', marginBottom: '20px' }}>
           <Image
             src={user.profileImage || '/default-profile.png'}
