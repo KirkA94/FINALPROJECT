@@ -62,7 +62,7 @@ export default function CreateUser() {
       if (response.ok) {
         const data = await response.json();
         setMessage('User created successfully! Redirecting to homepage...');
-        login(data.token, data.user); // Use AuthContext to log in
+        login(data.token, data.user, data.refreshToken); // Use AuthContext to log in
         setTimeout(() => {
           router.push('/');
         }, 2000);

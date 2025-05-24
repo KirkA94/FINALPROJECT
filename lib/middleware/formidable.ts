@@ -1,4 +1,4 @@
-import formidable, { IncomingForm, Fields, Files } from 'formidable';
+import { IncomingForm, Fields, Files } from 'formidable'; // Only import what is used
 import { NextApiRequest } from 'next';
 
 // Disable Next.js body parser

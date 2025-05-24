@@ -38,7 +38,7 @@ export default function LoginPage() {
       const data: { accessToken: string; user: { username: string; profileImage: string }; refreshToken: string } =
         await response.json();
 
-      login(data.accessToken, { username: data.user.username, profileImage: data.user.profileImage });
+      login(data.accessToken, { username: data.user.username, profileImage: data.user.profileImage }, data.refreshToken);
       router.push('/polls');
     } catch (err: unknown) {
       setError((err as Error).message || 'An unexpected error occurred.');

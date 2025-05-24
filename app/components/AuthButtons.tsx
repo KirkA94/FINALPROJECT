@@ -26,7 +26,8 @@ export default function AuthButtons() {
 
       if (response.ok) {
         const { accessToken, refreshToken, user } = await response.json();
-        login(accessToken, user, refreshToken);
+        // Pass refreshToken to login or handle it elsewhere
+        login(accessToken, user, refreshToken); // Assuming your login function accepts refreshToken
         alert('Login successful!');
         router.push('/dashboard');
       } else {
