@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
         profileImage: user.profileImage,
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Failed to sign in" }, { status: 500 });
   }
 }

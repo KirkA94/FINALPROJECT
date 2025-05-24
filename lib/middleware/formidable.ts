@@ -1,26 +1,27 @@
-import { IncomingForm } from 'formidable';
-import { NextApiRequest, NextApiResponse } from 'next';
-import { promisify } from 'util';
+import formidable, { IncomingForm, Fields, Files } from 'formidable';
+import { NextApiRequest } from 'next';
 
-// Disable body parsing by Next.js
+// Disable Next.js body parser
 export const config = {
   api: {
     bodyParser: false,
   },
 };
 
-// Promisify the formidable form.parse function for easier use
-const parseForm = promisify((req: NextApiRequest, cb: (err: any, fields: any, files: any) => void) => {
-  const form = new IncomingForm();
-  form.parse(req, cb);
-});
+// Parse multipart form data
+export async function parseMultipartForm(req: NextApiRequest): Promise<{ fields: Fields; files: Files }> {
+  const form = new IncomingForm({
+    multiples: true, // Allow multiple file uploads
+    keepExtensions: true, // Preserve file extensions
+  });
 
-export async function parseMultipartForm(req: NextApiRequest, res: NextApiResponse) {
-  try {
-    const { fields, files } = await parseForm(req);
-    return { fields, files };
-  } catch (error) {
-    res.status(500).json({ error: 'Error parsing form data' });
-    throw error;
-  }
+  return new Promise((resolve, reject) => {
+    form.parse(req, (err, fields, files) => {
+      if (err) {
+        reject(err); // Reject with error if parsing fails
+      } else {
+        resolve({ fields, files }); // Resolve with fields and files as an object
+      }
+    });
+  });
 }

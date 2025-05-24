@@ -5,10 +5,10 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/app/context/AuthContext';
 
 export default function LoginPage() {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [username, setUsername] = useState<string>(''); // Used in input fields
+  const [password, setPassword] = useState<string>(''); // Used in input fields
+  const [error, setError] = useState<string | null>(null); // Used to display errors
+  const [loading, setLoading] = useState(false); // Used to disable buttons during form submission
   const router = useRouter();
   const { login } = useAuth();
 
@@ -17,7 +17,6 @@ export default function LoginPage() {
     setError(null);
     setLoading(true);
 
-    // Client-side validation
     if (!username || !password) {
       setError('Both username and password are required.');
       setLoading(false);
@@ -27,9 +26,7 @@ export default function LoginPage() {
     try {
       const response = await fetch('/api/users/sign-in', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password }),
       });
 
@@ -38,19 +35,13 @@ export default function LoginPage() {
         throw new Error(data.error || 'Failed to sign in.');
       }
 
-      const data = await response.json();
+      const data: { accessToken: string; user: { username: string; profileImage: string }; refreshToken: string } =
+        await response.json();
 
-      // Log in the user using AuthContext
-      login(data.accessToken, {
-        username: data.user.username,
-        profileImage: data.user.profileImage,
-      }, data.refreshToken);
-
-      // Redirect to polls or dashboard
+      login(data.accessToken, { username: data.user.username, profileImage: data.user.profileImage });
       router.push('/polls');
-    } catch (err: any) {
-      console.error('Error during sign-in:', err);
-      setError(err.message || 'An unexpected error occurred.');
+    } catch (err: unknown) {
+      setError((err as Error).message || 'An unexpected error occurred.');
     } finally {
       setLoading(false);
     }
@@ -65,7 +56,6 @@ export default function LoginPage() {
           <input
             type="text"
             id="username"
-            aria-label="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
@@ -77,7 +67,6 @@ export default function LoginPage() {
           <input
             type="password"
             id="password"
-            aria-label="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             style={{ width: '100%', padding: '8px', border: '1px solid #ddd', borderRadius: '4px' }}
